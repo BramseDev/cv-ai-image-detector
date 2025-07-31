@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Health Dashboard</h1>
+
+        <div class="button-group">
+            <button onclick="manualRefresh()">Refresh</button>
+            <button id="auto-refresh-btn" class="btn-secondary" onclick="toggleAutoRefresh()">Auto-Refresh (10s)</button>
+            <button class="btn-secondary" onclick="exportHistory()">Export History</button>
+            <button class="btn-danger" onclick="clearHistory()">Clear History</button>
+        </div>
+
+        <div id="health-content">
+            <div class="loading">Checking health...</div>
+        </div>
+    </div>
+    <script src="/dashboard/static/js/dashboard.js"></script>
+</body>
+</html>

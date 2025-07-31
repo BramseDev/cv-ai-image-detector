@@ -1,0 +1,90 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+# Existing entries...
+*.tmp
+*.temp
+*.log
+logs/*
+uploads/*
+tmp/*
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+node_modules/
+
+# Android/Mobile Development
+*.apk
+*.ap_
+*.dex
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.jks
+*.keystore
+
+# Large files and binaries
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI Model files (if large)
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pb
+checkpoint.*
+
+# Build artifacts
+target/
+dist/
+*.o

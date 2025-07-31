@@ -1,0 +1,67 @@
+.PHONY: docker-build docker-run docker-stop docker-clean setup test deploy logs
+
+# One-command deployment
+deploy: docker-build docker-run
+    @echo "Waiting for service to start..."
+    @sleep 15
+    @make test-health
+    @echo "Image Analyzer is running!"
+    @echo "Service: http://localhost:8080"
+    @echo "Metrics: http://localhost:8080/metrics"
+    @echo "Health: http://localhost:8080/health"
+
+# Docker commands
+docker-build:
+    @echo "Building Docker image..."
+    docker-compose build --no-cache
+
+docker-run:
+    @echo "Starting services..."
+    docker-compose up -d
+
+docker-stop:
+    @echo "Stopping services..."
+    docker-compose down
+
+docker-clean:
+    @echo "Cleaning up..."
+    docker-compose down -v --remove-orphans
+    docker system prune -af
+
+# Development
+setup:
+    @echo "Setting up development environment..."
+    go mod tidy
+    cd pythonScripts && python -m pip install -r requirements.txt
+
+# Testing
+test-health:
+    @echo "Testing health endpoint..."
+    @curl -f http://localhost:8080/health && echo "Health check passed!" || echo "Health check failed!"
+
+test-upload:
+    @echo "Testing upload with sample image..."
+    @if [ -f "test-image.jpg" ]; then \
+        curl -X POST -F "file=@test-image.jpg" http://localhost:8080/upload; \
+    else \
+        echo "No test-image.jpg found for upload test"; \
+    fi
+
+# Logs and monitoring
+logs:
+    docker-compose logs -f image-analyzer
+
+logs-all:
+    docker-compose logs -f
+
+# Quick restart
+restart: docker-stop docker-run
+    @echo "Service restarted!"
+
+# Status check
+status:
+    @echo "Service Status:"
+    @docker-compose ps
+    @echo ""
+    @echo "Health Check:"
+    @curl -s http://localhost:8080/health | jq '.' || echo "Service not responding"
