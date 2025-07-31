@@ -284,6 +284,7 @@ make restart
 source venv/bin/activate
 cd pythonscripts
 source venv/bin/activate
+cd ..
 go run cmd/server/main.go
 ```
 
