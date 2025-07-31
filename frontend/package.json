@@ -1,0 +1,40 @@
+{
+	"name": "fake-image-project",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-node": "^5.2.12",
+		"@sveltejs/kit": "^2.16.0",
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
+		"@tailwindcss/forms": "^0.5.9",
+		"@tailwindcss/typography": "^0.5.15",
+		"@tailwindcss/vite": "^4.0.0",
+		"@types/pg": "^8.11.14",
+		"daisyui": "^5.0.20",
+		"drizzle-kit": "^0.31.0",
+		"svelte": "^5.0.0",
+		"svelte-check": "^4.0.0",
+		"tailwindcss": "^4.0.0",
+		"tsx": "^4.19.4",
+		"typescript": "^5.0.0",
+		"vite": "^6.2.5"
+	},
+	"dependencies": {
+		"@node-rs/argon2": "^2.0.2",
+		"@oslojs/crypto": "^1.0.1",
+		"@oslojs/encoding": "^1.1.0",
+		"dotenv": "^16.5.0",
+		"drizzle-orm": "^0.43.1",
+		"pg": "^8.15.6",
+		"postgres": "^3.4.5"
+	}
+}
