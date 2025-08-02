@@ -5,20 +5,25 @@ import (
 )
 
 func calculateEXIFScore(data map[string]interface{}) float64 {
-	hasCameraInfo, _ := utils.GetFloatValue(data, "has_camera_info")
-	if hasCameraInfo > 0 {
-		return 0.0
+	if hasCameraInfo, exists := data["has_camera_info"]; exists {
+		if has, ok := hasCameraInfo.(bool); ok && has {
+			return 0.0 // Authentisch - Camera-Info vorhanden
+		} else {
+			return -1 // Ignorieren - keine Camera-Info
+		}
 	}
-	return 0.0
+	return -1 // Ignorieren - kein EXIF-Check möglich
 }
 
 func calculateMetadataScore(data map[string]interface{}) float64 {
 	if hasMetadata, exists := data["has_metadata"]; exists {
 		if has, ok := hasMetadata.(bool); ok && has {
-			return 0.0
+			return 0.0 // Authentisch - Metadata vorhanden
+		} else {
+			return -1 // Ignorieren - keine Metadata
 		}
 	}
-	return 0.0
+	return -1 // Ignorieren - kein Metadata-Check möglich
 }
 
 func calculateAIModelScore(data map[string]interface{}) float64 {

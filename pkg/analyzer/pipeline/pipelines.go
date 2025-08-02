@@ -541,10 +541,20 @@ func (ap *AnalysisPipeline) extractConfidenceScore(data interface{}) float64 {
 	}
 
 	// C2PA Score
-	if c2paScore, exists := dataMap["score"]; exists {
-		if scoreFloat, ok := c2paScore.(float64); ok {
-			return scoreFloat / 100.0 // Normalisiere auf 0-1
+	if c2paData, exists := dataMap["claims"]; exists {
+		if claims, ok := c2paData.([]interface{}); ok && len(claims) > 0 {
+
+			if c2paScore, exists := dataMap["score"]; exists {
+				if scoreFloat, ok := c2paScore.(float64); ok {
+					return scoreFloat / 100.0
+				}
+			}
 		}
+	}
+
+	// Wenn keine C2PA-Claims = ignorieren (return -1)
+	if _, exists := dataMap["no_c2pa_data"]; exists {
+		return -1 // Wird ignoriert in der Bewertung
 	}
 
 	// Pixel Analysis Score
