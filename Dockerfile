@@ -14,8 +14,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 WORKDIR /app
+
+# Install Python dependencies für beide Module
 COPY pythonScripts/requirements.txt ./pythonScripts/
+COPY ai-analyse/requirements.txt ./ai-analyse/
 RUN pip install --no-cache-dir -r pythonScripts/requirements.txt \
+    && pip install --no-cache-dir -r ai-analyse/requirements.txt \
     && pip cache purge
 
 COPY pythonScripts/ ./pythonScripts/
