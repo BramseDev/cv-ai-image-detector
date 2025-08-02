@@ -1,7 +1,7 @@
 [package]
 name = "c2pa-rust"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"  # Ändere von "2024" zu "2021"
 
 [dependencies]
 c2pa = "0.49.3"
