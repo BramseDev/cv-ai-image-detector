@@ -1,6 +1,13 @@
-# Image Analyzer - AI Detection System
+# AI Image Detection System
 
-This is a Bachelor project, which explores the integration of computer vision and artificial intelligence to analyze and evaluate AI-generated images. The system automatically processes these images, extracts relevant features through computer vision techniques, and applies advanced AI models to assess and assign weighted scores based on predefined criteria. This is our Take on how we can try to detect KI Images. 
+This Bachelor project explores the integration of computer vision and artificial intelligence to automatically analyze and evaluate AI-generated images. 
+
+## Overview
+Our system processes images through advanced computer vision techniques to extract relevant features, then applies AI models to assess and assign weighted scores based on predefined detection criteria.
+
+## Acknowledgments
+Special thanks to [@lawi2022](https://github.com/lawi2022) and [@derfisch98](https://github.com/derfisch98) for their significant contributions to the development of this AI detection system, along with all other contributors.
+
 
 
 ## Features
@@ -69,7 +76,7 @@ After deployment, access these URLs:
 ### Upload Image for Analysis
 
 ```bash
-curl -X POST -F "file=@your-image.jpg" http://localhost:8080/upload
+curl -X POST -F "image=@your-image.jpg" http://localhost:8080/upload
 ```
 
 ### Example Response
@@ -277,6 +284,7 @@ make restart
 source venv/bin/activate
 cd pythonscripts
 source venv/bin/activate
+cd ..
 go run cmd/server/main.go
 ```
 

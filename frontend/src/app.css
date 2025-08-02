@@ -1,0 +1,12 @@
+@import url('/css/general-sans.css');
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@plugin "daisyui" {
+    themes: light --default;
+}
+
+html {
+    scroll-behavior: smooth;
+}
