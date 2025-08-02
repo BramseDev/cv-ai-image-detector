@@ -76,7 +76,7 @@ After deployment, access these URLs:
 ### Upload Image for Analysis
 
 ```bash
-curl -X POST -F "file=@your-image.jpg" http://localhost:8080/upload
+curl -X POST -F "image=@your-image.jpg" http://localhost:8080/upload
 ```
 
 ### Example Response
