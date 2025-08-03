@@ -28,8 +28,10 @@ go.work.sum
 .Python
 [Bb]in
 [Ii]nclude
-[Ll]ib
-[Ll]ib64
+[Bb]in/[Ll]ib
+[Bb]in/[Ll]ib64
+# Allow frontend/lib directory
+!frontend/lib
 [Ll]ocal
 pyvenv.cfg
 .venv
