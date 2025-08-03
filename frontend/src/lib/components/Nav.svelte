@@ -6,13 +6,13 @@
 
 {#snippet links()}
     <li>
-        <a href="/frontend/static#how-it-works">How It Works</a>
+        <a href="/#how-it-works">How It Works</a>
     </li>
     <li>
-        <a href="/frontend/static#use-cases">Use Cases</a>
+        <a href="/#use-cases">Use Cases</a>
     </li>
     <li>
-        <a href="/frontend/static#faq">FAQ</a>
+        <a href="/#faq">FAQ</a>
     </li>
 {/snippet}
 
