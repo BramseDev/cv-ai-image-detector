@@ -34,7 +34,7 @@
     <div class="drawer-content">
         <nav class="navbar bg-base-100 max-w-11/12 mx-auto">
             <div class="flex-1">
-                <a href="/frontend/static" class="text-xl font-medium px-4 py-2"
+                <a href="/" class="text-xl font-medium px-4 py-2"
                     >AI Image Detector</a
                 >
             </div>
