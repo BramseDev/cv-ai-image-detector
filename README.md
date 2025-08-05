@@ -251,9 +251,7 @@ make test
 
 The system implements intelligent caching in 
 
-pipelines.go
-
-:
+pipelines.go:
 
 - **Image Fingerprinting**: SHA256-based cache keys
 - **Result Persistence**: 30-minute cache TTL
@@ -322,9 +320,7 @@ curl -X POST -F "file=@test-image.jpg" http://localhost:8080/upload
 
 Add new detection algorithms in 
 
-pythonScripts
-
-:
+pythonScripts:
 
 ```python
 def analyze_custom_feature(image_path):
@@ -338,9 +334,7 @@ def analyze_custom_feature(image_path):
 
 Register in 
 
-pipelines.go
-
-:
+pipelines.go:
 
 ```go
 {
@@ -398,11 +392,7 @@ This project is licensed under the MIT License. See LICENSE file for details.
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (
-
-git push origin feature/amazing-feature
-
-)
+4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
 ## Support
