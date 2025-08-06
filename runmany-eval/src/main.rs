@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         print_usage();
         return Ok(());
     }
-    
+
     let expect: u8 = match &argv[1].as_str() {
         &"1" | &"real" | &"genuine" => 1,
         &"2" | &"fake" | &"generated" => 2,
@@ -24,11 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let path = PathBuf::from(&argv[3]);
     let url: &str = &argv[2];
     let report = run_multiple(path, expect, url);
-    
+
     if argc == 4 {
         return Ok(());
     }
-    
+
     let write_path = &argv[4];
     let report_json = match serde_json::to_string(&report) {
         Ok(j) => j,
@@ -66,18 +66,18 @@ fn write_report(report: String, write_path: PathBuf) {
 fn run_multiple(path: PathBuf, expected_result: u8, url: &str) -> EvalReport {
     let mut results: Vec<EvalResult> = Vec::new();
     let client = Client::new();
-    
+
     let file_paths = match std::fs::read_dir(&path) {
         Ok(paths) => paths,
         Err(_) => return EvalReport::from(Vec::new())
     };
-    
+
     let files_count = std::fs::read_dir(path).unwrap().count();
     println!("Analyzing {} files", files_count);
     for (idx, fpath) in file_paths.enumerate() {
         let file_name = fpath.as_ref().unwrap().file_name().into_string().unwrap(); // of course
         println!("({}/{}) Performing analysis on file {}", (idx + 1), files_count, file_name);
-        
+
         let file = match File::open(fpath.unwrap().path()) {
             Ok(f) => f,
             Err(e) => {
@@ -88,7 +88,7 @@ fn run_multiple(path: PathBuf, expected_result: u8, url: &str) -> EvalReport {
                 continue;
             }
         };
-        
+
         let eval = match upload_file(file_name.clone(), file, &client, url) {
             Ok(val) => val,
             Err(e) => {
@@ -99,13 +99,13 @@ fn run_multiple(path: PathBuf, expected_result: u8, url: &str) -> EvalReport {
                 continue;
             }
         };
-        
+
         println!("Analysis of file {} returned {}, expected {}\n", file_name, eval, expected_result);
         results.push(
             EvalResult::new(expected_result, eval, file_name)
         );
     }
-    
+
     let report = EvalReport::from(results);
     print_report(&report);
     report
@@ -127,20 +127,20 @@ fn print_report(report: &EvalReport) {
 fn upload_file(file_name: String, mut file: File, client: &Client, url: &str) -> Result<u8, std::io::Error>{
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
-    
+
     let file_ext = file_name.split(".").last().unwrap();
-    let mime = match file_ext {
+    let mime = match file_ext.to_lowercase().as_str() {
         "png" => "image/png",
         "jpg" | "jpeg" => "image/jpeg",
         _ => return Err(std::io::Error::new(ErrorKind::InvalidData, "Invalid file type"))
     };
-    
+
     let part = multipart::Part::bytes(buffer)
         .file_name(file_name)
         .mime_str(mime).unwrap();
-    
+
     let form = multipart::Form::new().part("image", part);
-    
+
     let server_response = match client.post(url).multipart(form).send() {
         Ok(resp) => resp,
         Err(e) => return Err(std::io::Error::new(ErrorKind::Other, e.to_string()))
@@ -154,9 +154,9 @@ fn get_verdict(response: Response) -> u8 {
         Some(_) => return 0,
         None => {},
     };
-    
+
     let json: Value = serde_json::from_str(result_plain.as_str()).unwrap();
     let verdict = json["analysis"]["verdict"].to_string();
-    
+
     return if verdict.contains("Authentic") { 1 } else { 2 }
 }
