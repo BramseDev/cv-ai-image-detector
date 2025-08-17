@@ -3,59 +3,66 @@ package verdict
 func calculateAdvancedBoost(scores map[string]float64) float64 {
 	boost := 1.0
 
-	consistencyCount := 0
-	traditionalMethods := []string{"artifacts", "lighting-analysis", "advanced-artifacts", "pixel-analysis"}
-	for _, method := range traditionalMethods {
+	topMethods := []string{"color-balance", "lighting-analysis", "metadata"}
+	aiConsistency := 0
+	authenticityConsistency := 0
+	
+	for _, method := range topMethods {
 		if score, exists := scores[method]; exists {
-			if score >= 0.4 {
-				consistencyCount++
+			if score >= 0.6 {
+				aiConsistency++
+			} else if score <= 0.4 {
+				authenticityConsistency++
 			}
 		}
 	}
 
-	if consistencyCount >= 3 {
-		boost *= 1.4
-	} else if consistencyCount >= 2 {
-		boost *= 1.2
+	if aiConsistency >= 2 {
+		boost *= 1.25
+	} else if authenticityConsistency >= 2 {
+		boost *= 0.75
 	}
 
 	if aiModelScore, exists := scores["ai-model"]; exists {
-		if artifactsScore, exists := scores["artifacts"]; exists {
-			if aiModelScore >= 0.5 && artifactsScore >= 0.6 {
-				boost *= 1.5
-			}
-
-			if aiModelScore >= 0.7 && artifactsScore <= 0.3 {
-				boost *= 1.3
-			}
-		}
-
-		if aiModelScore <= 0.3 {
-			authenticityCount := 0
-			if compressionScore, exists := scores["compression"]; exists && compressionScore <= 0.3 {
-				authenticityCount++
-			}
-			if colorScore, exists := scores["color-balance"]; exists && colorScore <= 0.2 {
-				authenticityCount++
-			}
-			if artifactsScore, exists := scores["artifacts"]; exists && artifactsScore <= 0.4 {
-				authenticityCount++
-			}
-
-			if authenticityCount >= 2 {
-				boost *= 0.6
-			}
-		}
-
-		if aiModelScore >= 0.8 || aiModelScore <= 0.2 {
+		if aiModelScore >= 0.8 {
 			boost *= 1.4
+		} else if aiModelScore <= 0.2 {
+			boost *= 0.65
+		}
+		
+		if colorScore, exists := scores["color-balance"]; exists {
+			if aiModelScore >= 0.7 && colorScore >= 0.6 {
+				boost *= 1.3
+			} else if aiModelScore <= 0.3 && colorScore <= 0.4 {
+				boost *= 0.7
+			}
 		}
 	}
 
-	if boost > 2.0 {
-		boost = 2.0
-	} else if boost < 0.4 {
-		boost = 0.4
+	if colorScore, exists := scores["color-balance"]; exists {
+		if metadataScore, exists := scores["metadata"]; exists {
+			if colorScore >= 0.6 && metadataScore >= 0.6 {
+				boost *= 1.2
+			} else if colorScore <= 0.4 && metadataScore <= 0.4 {
+				boost *= 0.8
+			}
+		}
+	}
+
+	if compressionScore, exists := scores["compression"]; exists && compressionScore >= 0.5 {
+		boost *= 0.9
+	}
+
+	if exifScore, exists := scores["exif"]; exists && exifScore >= 0.8 {
+		if colorScore, exists := scores["color-balance"]; exists && colorScore <= 0.4 {
+			boost *= 0.85
+		}
+	}
+
+	if boost > 1.6 {
+		boost = 1.6
+	} else if boost < 0.6 {
+		boost = 0.6
 	}
 
 	return boost

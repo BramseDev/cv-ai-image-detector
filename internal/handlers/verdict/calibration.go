@@ -8,16 +8,16 @@ func applyBalancedCalibration(scores map[string]float64) map[string]float64 {
 	calibrationFactors := map[string]float64{
 		"lighting-analysis":  1.30,
 		"artifacts":          1.05,
-		"advanced-artifacts": 1.15,
-		"pixel-analysis":     1.05,
-		"color-balance":      1.00,
-		"object-coherence":   0.90,
-		"compression":        0.40,
-		"metadata":           1.0,
-		"c2pa":               1.0,
+		"advanced-artifacts": 0.95,
+		"pixel-analysis":     0.80,
+		"color-balance":      1.20,
+		"object-coherence":   1.10,
+		"compression":        0.20,
+		"metadata":           1.15,
+		"c2pa":               0.90,
 		"exif":               0.70,
-		"ai-model":           1.0,
-		"metadata-quick":     1.0,
+		"ai-model":           1.25,
+		"metadata-quick":     1.08,
 	}
 
 	for name, score := range scores {
@@ -39,25 +39,32 @@ func applyDynamicWeights(weights map[string]float64, scores map[string]float64) 
 		adjustedWeights[method] = weight
 	}
 
-	// Dynamic adjustments based on scores
-	if metadataScore, exists := scores["metadata"]; exists && metadataScore <= 0.1 {
-		adjustedWeights["metadata"] *= 1.3 // Boost metadata weight if strong authenticity
+	if exifScore, exists := scores["exif"]; exists {
+		if exifScore >= 0.8 {
+			adjustedWeights["exif"] *= 1.4
+		} else if exifScore <= 0.2 {
+			adjustedWeights["exif"] *= 1.3
+		}
 	}
 
-	if exifScore, exists := scores["exif"]; exists && exifScore <= 0.1 {
-		adjustedWeights["exif"] *= 1.3 // Boost EXIF weight if strong authenticity
+	if colorScore, exists := scores["color-balance"]; exists {
+		if colorScore >= 0.7 {
+			adjustedWeights["color-balance"] *= 1.3
+		} else if colorScore <= 0.3 {
+			adjustedWeights["color-balance"] *= 1.2
+		}
 	}
 
-	if compressionScore, exists := scores["compression"]; exists && compressionScore >= 0.6 {
-		adjustedWeights["compression"] *= 1.3 // Boost compression weight if suspicious
+	if lightingScore, exists := scores["lighting-analysis"]; exists && lightingScore >= 0.6 {
+		adjustedWeights["lighting-analysis"] *= 1.3
 	}
 
-	if pixelScore, exists := scores["pixel-analysis"]; exists && pixelScore >= 0.6 {
-		adjustedWeights["pixel-analysis"] *= 1.3 // Boost pixel analysis weight if suspicious
+	if compressionScore, exists := scores["compression"]; exists && compressionScore >= 0.4 {
+		adjustedWeights["compression"] *= 0.5
 	}
 
-	if colorScore, exists := scores["color-balance"]; exists && colorScore <= 0.2 {
-		adjustedWeights["color-balance"] *= 1.3 // Boost color balance weight if very authentic
+	if aiScore, exists := scores["ai-model"]; exists && aiScore >= 0 {
+		adjustedWeights["ai-model"] *= 1.5
 	}
 
 	return adjustedWeights

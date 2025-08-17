@@ -79,12 +79,12 @@ captures/
 *.swo
 
 # AI Model files (if large)
-*.pt
-*.pth
-*.onnx
-*.h5
-*.pb
-checkpoint.*
+# *.pt
+# *.pth
+# *.onnx
+# *.h5
+# *.pb
+# checkpoint.*
 
 # Build artifacts
 target/

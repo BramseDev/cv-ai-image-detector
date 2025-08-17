@@ -409,10 +409,10 @@ This project is licensed under the MIT License. See LICENSE file for details.
 | Score Range | Interpretation           | Description                                                                              |
 |-------------|--------------------------|------------------------------------------------------------------------------------------|
 | 0 - 19      | Very Likely Authentic    | Strong indicators of genuine photography. Natural compression, EXIF data present. Realistic lighting and color distribution. |
-| 20 - 39     | Likely Authentic         | Mostly authentic features. Minor anomalies within normal range. Probably a real photo.    |
-| 40 - 59     | Possibly AI Generated    | Mixed signals detected. Some suspicious characteristics present. Further analysis recommended. |
-| 60 - 79     | Very Likely AI Generated | Multiple AI indicators found. Unnatural artifacts or patterns. High probability of AI generation. |
-| 80 - 100    | Almost Certainly AI Generated | Strong AI signals in multiple areas. Characteristic AI artifacts. Very high confidence in AI detection. |
+| 20 - 54     | Likely Authentic         | Mostly authentic features. Minor anomalies within normal range. Probably a real photo.    |
+| 55 - 59     | Possibly AI Generated    | Mixed signals detected. Some suspicious characteristics present. Further analysis recommended. |
+| 60 - 79     | Likely AI Generated      | Multiple AI indicators found. Unnatural artifacts or patterns. High probability of AI generation. |
+| 80 - 100    | Very Likely AI Generated | Strong AI signals in multiple areas. Characteristic AI artifacts. Very high confidence in AI detection. |
 
 
 **Built with**: Go, Python, Rust, Docker, OpenCV, scikit-image, C2PA

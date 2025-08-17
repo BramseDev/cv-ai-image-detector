@@ -34,18 +34,18 @@ func CalculateOverallVerdict(results *pipeline.PipelineResult) map[string]interf
 	fmt.Printf("\n=== DEBUG SCORES ===\n")
 
 	weights := map[string]float64{
-		"metadata":           3.5,
+		"metadata":           3.8,
 		"c2pa":               3.5,
-		"artifacts":          2.2,
-		"lighting-analysis":  2.6,
-		"advanced-artifacts": 2.0,
-		"pixel-analysis":     1.8,
-		"color-balance":      1.5,
-		"object-coherence":   1.2,
-		"compression":        2.5,
-		"exif":               2.8,
-		"ai-model":           4.0,
-		"metadata-quick":     1.0,
+		"artifacts":          2.0,
+		"lighting-analysis":  3.2,
+		"advanced-artifacts": 1.5,
+		"pixel-analysis":     1.0,
+		"color-balance":      4.5,
+		"object-coherence":   2.2,
+		"compression":        0.6,
+		"exif":               1.8,
+		"ai-model":           5.0,
+		"metadata-quick":     2.5,
 	}
 
 	var definitiveScore float64 = -1

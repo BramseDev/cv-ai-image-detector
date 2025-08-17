@@ -38,9 +38,9 @@ func determineBalancedVerdict(score float64, scores map[string]float64) (string,
 	} else if scorePercent >= (60.0 + thresholdAdjustment*100) {
 		confidence := math.Min(0.9, baseConfidence+0.15)
 		return "Likely AI Generated", confidence
-	} else if scorePercent >= (40.0 + thresholdAdjustment*100) {
+	} else if scorePercent >= (55.0 + thresholdAdjustment*100) {
 		confidence := math.Min(0.8, baseConfidence)
-		return "Most Likely Authentic", confidence
+		return "Possibly AI Generated", confidence
 	} else if scorePercent >= (20.0 + thresholdAdjustment*100) {
 		confidence := math.Min(0.85, baseConfidence+0.1)
 		return "Likely Authentic", confidence
