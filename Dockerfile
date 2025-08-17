@@ -9,9 +9,17 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev \
     libgomp1 libgtk-3-0 libjpeg-dev libpng-dev git curl \
-    build-essential g++ gcc python3-dev \
+    build-essential g++ gcc python3-dev exiftool \
+    || apt-get install -y \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    libgomp1 libgtk-3-0 libjpeg-dev libpng-dev git curl \
+    build-essential g++ gcc python3-dev exiftool \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# Install Rust for c2pa binary compilation
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
 
@@ -25,7 +33,11 @@ RUN pip install --no-cache-dir -r pythonScripts/requirements.txt \
 COPY pythonScripts/ ./pythonScripts/
 COPY ai-analyse/ ./ai-analyse/
 COPY pkg/ ./pkg/
+COPY dashboard/ ./dashboard/
 COPY --from=go-builder /app/main .
+
+# Build c2pa-rust binary
+RUN cd pkg/analyzer/c2pa-rust && cargo build --release
 
 RUN mkdir -p /app/uploads /app/logs /app/tmp \
     && chmod +x ./main \

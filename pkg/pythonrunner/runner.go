@@ -299,13 +299,19 @@ func RunAIModelPrediction(ctx context.Context, imgPath string) (interface{}, err
 
 // Helper function to get the correct Python command
 func getPythonCommand() string {
-	// Prüfe Virtual Environment zuerst
+	// Prüfe Windows Virtual Environment zuerst
+	venvPythonWin := filepath.Join("venv", "Scripts", "python.exe")
+	if _, err := os.Stat(venvPythonWin); err == nil {
+		return venvPythonWin
+	}
+
+	// Prüfe Unix Virtual Environment (venv/bin/python3)
 	venvPython := filepath.Join("venv", "bin", "python3")
 	if _, err := os.Stat(venvPython); err == nil {
 		return venvPython
 	}
 
-	// Prüfe alternative Virtual Environment Pfade
+	// Prüfe alternative Unix Virtual Environment Pfade
 	venvPython2 := filepath.Join("venv", "bin", "python")
 	if _, err := os.Stat(venvPython2); err == nil {
 		return venvPython2

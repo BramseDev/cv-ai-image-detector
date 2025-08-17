@@ -102,8 +102,6 @@ def calculate_ai_pixel_score(results):
         color = results['color_analysis']
         indicators.append(color.get('oversaturation_indicator', False))
         indicators.append(color.get('color_uniformity_indicator', False))
-    if 'grid_analysis' in results:
-        indicators.append(results['grid_analysis'].get('grid_artifact_indicator', False))
 
     ai_score = sum(indicators) / len(indicators) if indicators else 0.0
 
@@ -123,8 +121,7 @@ def analyze_pixel_patterns(img_path):
         results = {
             'noise_analysis': analyze_noise_patterns(img),
             'frequency_analysis': analyze_frequency_domain(img),
-            'color_analysis': check_color_consistency(img),
-            'grid_analysis': detect_grwid_artifacts(img)
+            'color_analysis': check_color_consistency(img)
         }
 
         results['overall_assessment'] = calculate_ai_pixel_score(results)
