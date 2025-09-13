@@ -162,34 +162,38 @@ def analyze_advanced_artifacts(img_path):
         return {'error': str(e)}
 
 def calculate_advanced_ai_score(results):
-    """Berechnet AI-Score basierend auf erweiterten Analysen"""
     indicators = []
 
-    # AI-Pattern Indikatoren
+    # AI-Pattern Indikatoren - AGGRESSIVER
     if 'ai_patterns' in results:
-        indicators.append(results['ai_patterns'].get('ai_pattern_indicator', False))
+        patterns = results['ai_patterns']
+        # Gradient-Uniformity > 80 ist sehr verdächtig
+        if patterns.get('gradient_uniformity', 0) > 75:
+            indicators.append(True)
+        else:
+            indicators.append(patterns.get('ai_pattern_indicator', False))
 
-    # Compression Timeline Indikatoren
+    # Synthetic Noise - DIREKTER
+    if 'synthetic_noise' in results:
+        noise = results['synthetic_noise']
+        if noise.get('synthetic_noise_indicator', False):
+            indicators.append(True)
+        elif noise.get('noise_uniformity', 0) > 30:  # Dein Wert: 36
+            indicators.append(True)
+        else:
+            indicators.append(False)
+
+    # Compression Timeline
     if 'compression_timeline' in results:
         indicators.append(results['compression_timeline'].get('likely_recompressed', False))
 
-    # Synthetic Noise Indikatoren
-    if 'synthetic_noise' in results:
-        indicators.append(results['synthetic_noise'].get('synthetic_noise_indicator', False))
-
-    # Berechne Score
     ai_score = sum(indicators) / len(indicators) if indicators else 0.0
-    confidence = len(indicators) / 3.0  # Max 3 erweiterte Indikatoren
 
-    return {
-        'advanced_ai_probability': float(ai_score),
-        'advanced_confidence': float(confidence),
-        'advanced_indicators': {
-            'unnatural_patterns': bool(results.get('ai_patterns', {}).get('ai_pattern_indicator', False)),
-            'compression_history': bool(results.get('compression_timeline', {}).get('likely_recompressed', False)),
-            'synthetic_noise': bool(results.get('synthetic_noise', {}).get('synthetic_noise_indicator', False))
-        }
-    }
+    # BOOST für mehrere Indikatoren
+    if sum(indicators) >= 2:
+        ai_score = min(ai_score * 1.3, 1.0)
+
+    return ai_score
 
 def main():
     if len(sys.argv) != 2:

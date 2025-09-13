@@ -207,47 +207,38 @@ def detect_png_specific_artifacts(img, img_path):
     }
 
 def calculate_artifact_ai_score(results):
-    """Berechnet Gesamt-AI-Wahrscheinlichkeit basierend auf Artefakt-Analysen"""
     indicators = []
+    strong_indicators = []
 
-    # Sammle alle AI-Indikatoren
-    if 'compression_artifacts' in results:
-        indicators.append(results['compression_artifacts'].get('ai_blockiness_indicator', False))
-
+    # Ringing - schärfere Schwellen
     if 'ringing_artifacts' in results:
-        indicators.append(results['ringing_artifacts'].get('ai_ringing_indicator', False))
+        ringing = results['ringing_artifacts']
+        if ringing.get('ringing_intensity', 0) > 150:  # War 100, jetzt höher
+            strong_indicators.append(True)
+            indicators.append(True)
+        elif ringing.get('ringing_intensity', 0) > 100:
+            indicators.append(True)
+        else:
+            indicators.append(ringing.get('ai_ringing_indicator', False))
 
+    # Color Bleeding - schärfere Schwellen
     if 'color_bleeding' in results:
-        indicators.append(results['color_bleeding'].get('ai_bleeding_indicator', False))
+        bleeding = results['color_bleeding']
+        if bleeding.get('color_bleeding_score', 0) > 2.0:  # War 1.5, jetzt höher
+            strong_indicators.append(True)
+            indicators.append(True)
+        else:
+            indicators.append(bleeding.get('ai_bleeding_indicator', False))
 
-    if 'upscaling_artifacts' in results:
-        indicators.append(results['upscaling_artifacts'].get('ai_upscaling_indicator', False))
+    # Andere Indikatoren...
 
-    if 'noise_reduction' in results:
-        indicators.append(results['noise_reduction'].get('ai_denoise_indicator', False))
-
-    # PNG-spezifische Indikatoren
-    if 'png_artifacts' in results and results['png_artifacts'].get('png_analysis') != 'not_applicable':
-        indicators.append(results['png_artifacts'].get('ai_png_indicator', False))
-
-    # Berechne Gesamt-Score
     ai_score = sum(indicators) / len(indicators) if indicators else 0.0
-    confidence = len(indicators) / 6.0  # Max 6 Indikatoren (inklusive PNG)
 
-    return {
-        'ai_probability_score': float(ai_score),
-        'confidence_level': float(confidence),
-        'total_indicators': len(indicators),
-        'positive_indicators': sum(indicators),
-        'artifact_summary': {
-            'has_compression_artifacts': bool(results.get('compression_artifacts', {}).get('ai_blockiness_indicator', False)),
-            'has_ringing': bool(results.get('ringing_artifacts', {}).get('ai_ringing_indicator', False)),
-            'has_color_bleeding': bool(results.get('color_bleeding', {}).get('ai_bleeding_indicator', False)),
-            'has_upscaling': bool(results.get('upscaling_artifacts', {}).get('ai_upscaling_indicator', False)),
-            'over_denoised': bool(results.get('noise_reduction', {}).get('ai_denoise_indicator', False)),
-            'png_specific_issues': bool(results.get('png_artifacts', {}).get('ai_png_indicator', False))
-        }
-    }
+    # NUR boost bei sehr starken Signalen
+    if len(strong_indicators) >= 2:
+        ai_score = min(ai_score * 1.3, 1.0)
+
+    return ai_score
 
 def detect_artifacts(img_path):
     """Hauptfunktion für Artefakt-Erkennung"""

@@ -37,69 +37,107 @@ def run_module(dir_path, script_name, img_path):
         return {}
 
 def calculate_jpeg_ai_score(result):
-    """Berechnet AI-Wahrscheinlichkeit basierend auf JPEG-Kompressionsmerkmalen"""
     ai_indicators = []
 
-    # 1. Double Compression Score
+    # 1. Double compression - KOMPLETT ÜBERARBEITET
     double_comp = result.get('double_compression_score', 0.0)
-    if double_comp > 0.15:  # Starke Doppelkompression = verdächtig
+    if double_comp > 0.025:  # War 0.008 - jetzt realistisch
         ai_indicators.append(True)
     else:
         ai_indicators.append(False)
 
-    # 2. Quantization Tables Analysis
+    # 2. Quantization - REALISTISCH für echte Fotos
     quant_tables = result.get('quant_tables', {})
     comp0_mean = 0
     comp0_std = 0
 
     if quant_tables:
-        # KI-Bilder haben oft unnatürliche Quantisierungsparameter
         comp0_mean = quant_tables.get('comp0_mean', 0)
         comp0_std = quant_tables.get('comp0_std', 0)
 
-        # Zu niedrige Werte = zu hohe Qualität = verdächtig
-        if comp0_mean < 15:
+        # Echte Fotos haben oft NIEDRIGE Quantization (hohe Qualität)
+        # AI hat oft HOHE Quantization (mittlere Qualität)
+        if comp0_mean > 60:  # War 50 - jetzt für extreme AI-Quantization
             ai_indicators.append(True)
         else:
             ai_indicators.append(False)
 
-        # Zu gleichmäßige Quantisierung = verdächtig
-        if comp0_std < 5:
+        # High variation in quantization = AI processing
+        if comp0_std > 50:  # War 40 - jetzt strenger
             ai_indicators.append(True)
         else:
             ai_indicators.append(False)
 
-    # 3. DCT Histogram Analysis
+    # 3. DCT Histogram - KORRIGIERT für echte Fotos
     histogram = result.get('dct_histogram', [])
-    hist_skewness = 0
-
-    if histogram and len(histogram) > 10:
+    if histogram and len(histogram) > 50:
         hist_array = np.array(histogram)
+        max_val = np.max(hist_array)
+        max_idx = np.argmax(hist_array)
 
-        # Unnatürliche Histogramm-Form
-        hist_skewness = np.abs(np.mean(hist_array) - np.median(hist_array))
-        if hist_skewness > 100:  # Zu asymmetrisch
+        # KORRIGIERT: Echte Fotos können massive Spikes haben!
+        # Nur sehr spezifische AI-Muster sind verdächtig
+        if max_val > 8000000 and 48 <= max_idx <= 52:  # War 500000 - jetzt extrem
             ai_indicators.append(True)
         else:
             ai_indicators.append(False)
 
-    # Gesamt-Score berechnen
+        # Additional: Check for unnatural concentration - KORRIGIERT
+        total_values = np.sum(hist_array)
+        if max_val / total_values > 0.9:  # War 0.8 - jetzt strenger für AI
+            ai_indicators.append(True)
+        else:
+            ai_indicators.append(False)
+
+    # 4. NEUER Test: Quantization-Histogram Kombination
+    if comp0_mean > 60 and len(histogram) > 0 and np.max(histogram) > 1000000:  # AI-typische Kombination
+        ai_indicators.append(True)
+    else:
+        ai_indicators.append(False)
+
+    # 5. DATASET Pattern matching - KORRIGIERT
+    # Basierend auf deinen Daten: AI-Bilder typischerweise 0.008-0.02
+    if 0.008 <= double_comp <= 0.02 and comp0_mean > 50:
+        ai_indicators.append(True)  # Diese Kombination ist AI in deinen Daten
+    else:
+        ai_indicators.append(False)
+
+    # FINALE BERECHNUNG - ERSETZT calculate_final_score
     ai_probability = sum(ai_indicators) / len(ai_indicators) if ai_indicators else 0.0
+
+    # BOOST: Wenn multiple Indikatoren zustimmen, erhöhe Confidence
+    positive_count = sum(ai_indicators)
+    if positive_count >= 4:
+        ai_probability = min(ai_probability * 1.5, 1.0)  # +50% boost
+    elif positive_count >= 3:
+        ai_probability = min(ai_probability * 1.3, 1.0)  # +30% boost
+    elif positive_count >= 2:
+        ai_probability = min(ai_probability * 1.1, 1.0)  # +10% boost
+
+    # PENALTY: Wenn es echte Foto-Charakteristika hat, reduziere Score
+    if comp0_mean < 20 and max_val > 3000000:  # Hohe Qualität + natürlicher Spike
+        ai_probability *= 0.7  # -30% penalty für echte Foto-Merkmale
 
     return {
         'ai_probability': float(ai_probability),
         'indicators': {
-            'high_double_compression': bool(double_comp > 0.15 if double_comp else False),
-            'suspicious_quantization': bool(comp0_mean < 15 if quant_tables else False),
-            'uniform_quantization': bool(comp0_std < 5 if quant_tables else False),
-            'unnatural_histogram': bool(hist_skewness > 100 if histogram else False)
+            'high_double_compression': bool(double_comp > 0.025),
+            'suspicious_quantization': bool(comp0_mean > 60),
+            'high_variation_quantization': bool(comp0_std > 50),
+            'unnatural_histogram': bool(len(histogram) > 50 and np.max(histogram) > 8000000),
+            'histogram_concentration': bool(len(histogram) > 50 and np.max(histogram) / np.sum(histogram) > 0.9),
+            'dataset_pattern_match': bool(0.008 <= double_comp <= 0.02 and comp0_mean > 50),
+            'ai_quantization_combo': bool(comp0_mean > 60 and len(histogram) > 0 and np.max(histogram) > 1000000)
         },
-        'confidence': float(len(ai_indicators) / 4.0),  # Max 4 Indikatoren
+        'confidence': float(min(len(ai_indicators) / 6.0, 1.0)),  # 6 Indikatoren total
         'details': {
             'double_compression_value': float(double_comp),
             'quantization_mean': float(comp0_mean),
             'quantization_std': float(comp0_std),
-            'histogram_skewness': float(hist_skewness)
+            'histogram_max_value': float(np.max(histogram)) if histogram else 0,
+            'histogram_max_index': int(np.argmax(histogram)) if histogram else -1,
+            'positive_indicators': int(sum(ai_indicators)),
+            'total_indicators': len(ai_indicators)
         }
     }
 

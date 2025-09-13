@@ -53,45 +53,40 @@ def check_perspective_consistency(img):
         return 0.3  # Normal
 
 def check_lighting_physics(img):
-    """Prüft Beleuchtungs-Physik"""
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l_channel = lab[:,:,0]
 
-    # Gradient-Analyse
     grad_x = cv2.Sobel(l_channel, cv2.CV_64F, 1, 0, ksize=3)
     grad_y = cv2.Sobel(l_channel, cv2.CV_64F, 0, 1, ksize=3)
 
     gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
     gradient_std = np.std(gradient_magnitude)
 
-    # AI-generierte Bilder haben oft zu gleichmäßige Beleuchtung
-    if gradient_std < 20:
-        return 0.6  # Zu gleichmäßig = verdächtig
-    elif gradient_std > 80:
-        return 0.2  # Sehr ungleichmäßig = natürlich
+    # ANGEPASSTE Schwellen
+    if gradient_std < 15:  # War 20
+        return 0.8  # War 0.6, höher für AI-Verdacht
+    elif gradient_std > 100:  # War 80
+        return 0.1  # War 0.2, niedrigere Baseline
     else:
-        return 0.3  # Normal
+        return 0.4
 
 def analyze_edge_patterns(img):
-    """Analysiert Edge-Muster ohne AI"""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Verschiedene Edge-Detektoren
     canny = cv2.Canny(gray, 50, 150)
     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
 
-    # Edge-Dichte
     edge_density = np.mean(canny > 0)
     laplacian_var = np.var(laplacian)
 
-    # AI-Bilder haben oft zu saubere oder zu chaotische Edges
-    if edge_density < 0.05 or edge_density > 0.3:
-        return 0.5  # Unnatürliche Edge-Dichte
+    # WENIGER STRENGE Bewertung
+    if edge_density < 0.02 or edge_density > 0.4:  # War 0.05/0.3
+        return 0.8  # War 0.5, jetzt höher für AI
 
-    if laplacian_var < 100:
-        return 0.4  # Zu glatt
+    if laplacian_var < 50:  # War 100, jetzt niedriger
+        return 0.7  # War 0.4, jetzt höher
 
-    return 0.1  # Normal
+    return 0.2
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

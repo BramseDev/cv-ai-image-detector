@@ -91,24 +91,51 @@ def check_color_consistency(img):
     }
 
 def calculate_ai_pixel_score(results):
-    """Berechnet Gesamt-KI-Wahrscheinlichkeit aus Pixel-Analysen"""
     indicators = []
+    strong_indicators = []
 
     if 'noise_analysis' in results:
-        indicators.append(results['noise_analysis'].get('ai_noise_indicator', False))
+        noise = results['noise_analysis']
+        # SCHÄRFERE Kriterien
+        if noise.get('uniformity_score', 10) < 10:  # War 15, jetzt 10
+            indicators.append(True)
+            if noise.get('uniformity_score', 10) < 6:  # Sehr verdächtig
+                strong_indicators.append(True)
+        else:
+            indicators.append(False)
+
     if 'frequency_analysis' in results:
-        indicators.append(results['frequency_analysis'].get('ai_freq_indicator', False))
+        freq = results['frequency_analysis']
+        # SCHÄRFERE Kriterien
+        if freq.get('freq_ratio', 1.0) < 0.65:  # War 0.7, jetzt 0.65
+            indicators.append(True)
+            if freq.get('freq_ratio', 1.0) < 0.55:  # Sehr verdächtig
+                strong_indicators.append(True)
+        else:
+            indicators.append(False)
+
+    # Color analysis - weniger aggressiv
     if 'color_analysis' in results:
         color = results['color_analysis']
-        indicators.append(color.get('oversaturation_indicator', False))
-        indicators.append(color.get('color_uniformity_indicator', False))
+        # Nur bei BEIDEN Indikatoren
+        if color.get('oversaturation_indicator', False) and color.get('color_uniformity_indicator', False):
+            indicators.append(True)
+        else:
+            indicators.append(False)
 
     ai_score = sum(indicators) / len(indicators) if indicators else 0.0
+
+    # Nur boost bei STARKEN Signalen
+    if len(strong_indicators) >= 2:
+        ai_score = min(ai_score * 1.5, 1.0)
+    elif len(strong_indicators) >= 1:
+        ai_score = min(ai_score * 1.2, 1.0)
 
     return {
         'ai_probability_score': ai_score,
         'positive_indicators': sum(indicators),
-        'total_indicators': len(indicators)
+        'total_indicators': len(indicators),
+        'strong_indicators': len(strong_indicators)
     }
 
 def analyze_pixel_patterns(img_path):

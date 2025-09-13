@@ -2,64 +2,111 @@ package verdict
 
 import (
 	"fmt"
+	"math"
+	"strings"
 
 	"github.com/BramseDev/imageAnalyzer/pkg/analyzer/pipeline"
 )
 
 func CalculateOverallVerdict(results *pipeline.PipelineResult) map[string]interface{} {
 	scores := make(map[string]float64)
-	var reasoning []string
+	reasoning := []string{}
 
 	tempPipeline := pipeline.NewAnalysisPipeline()
 
-	traditionalMethods := []string{
-		"artifacts", "compression", "pixel-analysis", "color-balance",
-		"lighting-analysis", "advanced-artifacts", "object-coherence",
-	}
-
-	metadataMethods := []string{
-		"metadata", "metadata-quick", "exif", "c2pa",
+	// Methoden-Kategorisierung - METADATA UND TRADITIONAL ZUSAMMENGEFASST
+	computerVisionMethods := []string{
+		"artifacts",
+		"lighting-analysis",
+		"advanced-artifacts",
+		"pixel-analysis",
+		"color-balance",
+		"object-coherence",
+		"compression",
+		"metadata",
+		"c2pa",
+		"exif",
+		"metadata-quick",
 	}
 
 	aiMethods := []string{
 		"ai-model",
 	}
 
-	// Separate Score-Sammlung
-	traditionalScores := make(map[string]float64)
-	metadataScores := make(map[string]float64)
+	// Separate Score-Sammlung - NUR NOCH 2 KATEGORIEN
+	computerVisionScores := make(map[string]float64)
 	aiScores := make(map[string]float64)
 
 	// DEBUG: Log alle rohen Scores
 	fmt.Printf("\n=== DEBUG SCORES ===\n")
 
 	weights := map[string]float64{
-		"metadata":           3.8,
-		"c2pa":               3.5,
-		"artifacts":          2.0,
-		"lighting-analysis":  3.2,
-		"advanced-artifacts": 1.5,
-		"pixel-analysis":     1.0,
-		"color-balance":      4.5,
-		"object-coherence":   2.2,
-		"compression":        0.6,
-		"exif":               1.8,
-		"ai-model":           5.0,
-		"metadata-quick":     2.5,
+		"ai-model": 6.0,
+
+		"compression":        4.0,
+		"lighting-analysis":  3.5,
+		"artifacts":          3.0,
+		"advanced-artifacts": 3.0,
+		"color-balance":      3.0,
+
+		"metadata":       2.5,
+		"pixel-analysis": 2.5,
+		"c2pa":           2.0,
+
+		"object-coherence": 0.5,
+		"exif":             1.0,
+		"metadata-quick":   0.8,
 	}
 
 	var definitiveScore float64 = -1
 
 	for name, result := range results.Results {
-		score := tempPipeline.ExtractConfidenceScore(result)
+		var score float64 = -1
+
+		// Type assertion zu map[string]interface{}
+		resultData, ok := result.(map[string]interface{})
+		if !ok {
+			fmt.Printf("WARNING: %s has invalid data type: %T\n", name, result)
+			continue
+		}
+
+		// Verwende spezialisierte Score-Funktionen
+		switch name {
+		case "artifacts":
+			score = calculateArtifactsScore(resultData)
+		case "advanced-artifacts":
+			score = calculateAdvancedArtifactsScore(resultData)
+		case "ai-model":
+			score = calculateAIModelScore(resultData)
+		case "compression":
+			score = calculateCompressionScore(resultData)
+		case "pixel-analysis":
+			score = calculatePixelAnalysisScore(resultData)
+		case "lighting-analysis":
+			score = calculateLightingAnalysisScore(resultData)
+		case "color-balance":
+			score = calculateColorBalanceScore(resultData)
+		case "object-coherence":
+			score = calculateObjectCoherenceScore(resultData)
+		case "exif":
+			score = calculateEXIFScore(resultData)
+		case "metadata":
+			score = calculateMetadataScore(resultData)
+		case "metadata-quick":
+			score = calculateMetadataQuickScore(resultData)
+		case "c2pa":
+			score = calculateC2PAScore(resultData)
+		default:
+			// Fallback zur Pipeline
+			score = tempPipeline.ExtractConfidenceScore(result)
+		}
+
 		if score >= 0 {
 			scores[name] = score
 
-			// Kategorisiere Score
-			if contains(traditionalMethods, name) {
-				traditionalScores[name] = score
-			} else if contains(metadataMethods, name) {
-				metadataScores[name] = score
+			// Kategorisiere Score - NUR NOCH 2 KATEGORIEN
+			if contains(computerVisionMethods, name) {
+				computerVisionScores[name] = score
 			} else if contains(aiMethods, name) {
 				aiScores[name] = score
 			}
@@ -82,93 +129,106 @@ func CalculateOverallVerdict(results *pipeline.PipelineResult) map[string]interf
 		}
 	}
 
-	traditionalAvg := calculateCategoryAverage(traditionalScores)
-	metadataAvg := calculateCategoryAverage(metadataScores)
-	aiAvg := calculateCategoryAverage(aiScores)
+	// Berechne separate Scores - NUR NOCH 2 KATEGORIEN
+	computerVisionScore := calculateComputerVisionScore(computerVisionScores)
+	aiAnalysisScore := calculateAIAnalysisScore(aiScores)
+
+	// DEBUG: Log separate scores
+	fmt.Printf("\n=== SEPARATE SCORES ===\n")
+	fmt.Printf("Computer Vision (incl. Metadata): %.3f\n", computerVisionScore)
+	fmt.Printf("AI Deep Learning: %.3f\n", aiAnalysisScore)
+
+	var finalScore float64
+	var verdict string
+	var confidence float64
 
 	if definitiveScore >= 0 {
-		return createDefinitiveResponse(traditionalAvg, aiAvg, metadataAvg, scores, reasoning)
-	}
+		finalScore = definitiveScore
+		verdict = "AI Generated"
+		confidence = 0.95
+	} else {
+		// Kalibrierte Scores
+		calibratedScores := applyBalancedCalibration(scores)
 
-	calibratedScores := applyBalancedCalibration(scores)
-
-	fmt.Printf("\n=== CALIBRATED SCORES ===\n")
-	for name, score := range calibratedScores {
-		fmt.Printf("CAL %s: %.3f (was %.3f)\n", name, score, scores[name])
-	}
-
-	patternBoost := calculateAdvancedBoost(calibratedScores)
-	fmt.Printf("\nPATTERN BOOST: %.3f\n", patternBoost)
-
-	var weightedSum float64
-	var totalWeight float64
-
-	for name, score := range calibratedScores {
-		weight := weights[name]
-		if weight == 0 {
-			continue
+		fmt.Printf("\n=== CALIBRATED SCORES ===\n")
+		for name, score := range calibratedScores {
+			fmt.Printf("CAL %s: %.3f (was %.3f)\n", name, score, scores[name])
 		}
 
-		adaptiveWeight := weight
-		if score >= 0.8 {
-			adaptiveWeight *= 1.2
-		} else if score <= 0.2 {
-			adaptiveWeight *= 1.3
+		// Pattern-Boost
+		patternBoost := calculateAdvancedBoost(calibratedScores)
+		fmt.Printf("\nPATTERN BOOST: %.3f\n", patternBoost)
+
+		var weightedSum float64
+		var totalWeight float64
+
+		for name, score := range calibratedScores {
+			weight := weights[name]
+			if weight == 0 {
+				continue
+			}
+
+			adaptiveWeight := weight
+			if score >= 0.8 {
+				adaptiveWeight *= 1.2
+			} else if score <= 0.2 {
+				adaptiveWeight *= 1.3
+			}
+
+			contribution := score * adaptiveWeight
+			weightedSum += contribution
+			totalWeight += adaptiveWeight
+
+			fmt.Printf("CONTRIB %s: score=%.3f * weight=%.3f = %.3f\n",
+				name, score, adaptiveWeight, contribution)
+
+			if score >= 0.7 {
+				reasoning = append(reasoning, fmt.Sprintf("%s: Strong AI indicators (%.0f%% probability)", name, score*100))
+			} else if score <= 0.3 {
+				reasoning = append(reasoning, fmt.Sprintf("%s: Authenticity indicators (%.0f%% authentic)", name, (1-score)*100))
+			} else {
+				reasoning = append(reasoning, fmt.Sprintf("%s: Moderate signals (%.0f%% probability)", name, score*100))
+			}
 		}
 
-		contribution := score * adaptiveWeight
-		weightedSum += contribution
-		totalWeight += adaptiveWeight
-
-		fmt.Printf("CONTRIB %s: score=%.3f * weight=%.3f = %.3f\n",
-			name, score, adaptiveWeight, contribution)
-
-		if score >= 0.7 {
-			reasoning = append(reasoning, fmt.Sprintf("%s: Strong AI indicators (%.0f%% probability)", name, score*100))
-		} else if score <= 0.3 {
-			reasoning = append(reasoning, fmt.Sprintf("%s: Authenticity indicators (%.0f%% authentic)", name, (1-score)*100))
-		} else {
-			reasoning = append(reasoning, fmt.Sprintf("%s: Moderate signals (%.0f%% probability)", name, score*100))
+		if totalWeight == 0 {
+			return map[string]interface{}{
+				"verdict":     "Analysis Failed",
+				"probability": 0.0,
+				"confidence":  0.0,
+				"summary":     "No usable analysis results obtained",
+				"reasoning":   []string{"Technical error during analysis"},
+				"scores":      scores,
+			}
 		}
-	}
 
-	if totalWeight == 0 {
-		return map[string]interface{}{
-			"verdict":     "Analysis Failed",
-			"probability": 0.0,
-			"confidence":  0.0,
-			"summary":     "No usable analysis results obtained",
-			"reasoning":   []string{"Technical error during analysis"},
-			"scores":      scores,
+		baseScore := weightedSum / totalWeight
+		fmt.Printf("\nBASE SCORE: %.3f (weightedSum=%.3f / totalWeight=%.3f)\n",
+			baseScore, weightedSum, totalWeight)
+
+		baseScore *= patternBoost
+		fmt.Printf("AFTER BOOST: %.3f\n", baseScore)
+
+		analysisQuality := float64(len(scores)) / 10.0
+		qualityBonus := 1.0
+		if analysisQuality >= 0.8 {
+			qualityBonus = 1.05
+		} else if analysisQuality < 0.5 {
+			qualityBonus = 0.95
 		}
+
+		finalScore = baseScore * qualityBonus
+		fmt.Printf("FINAL SCORE: %.3f (quality=%.3f)\n", finalScore, qualityBonus)
+
+		// Clamp auf 0-1 Bereich
+		if finalScore > 1.0 {
+			finalScore = 1.0
+		} else if finalScore < 0.0 {
+			finalScore = 0.0
+		}
+
+		verdict, confidence = determineBalancedVerdict(finalScore, calibratedScores)
 	}
-
-	baseScore := weightedSum / totalWeight
-	fmt.Printf("\nBASE SCORE: %.3f (weightedSum=%.3f / totalWeight=%.3f)\n",
-		baseScore, weightedSum, totalWeight)
-
-	baseScore *= patternBoost
-	fmt.Printf("AFTER BOOST: %.3f\n", baseScore)
-
-	analysisQuality := float64(len(scores)) / 10.0
-	qualityBonus := 1.0
-	if analysisQuality >= 0.8 {
-		qualityBonus = 1.05
-	} else if analysisQuality < 0.5 {
-		qualityBonus = 0.95
-	}
-
-	finalScore := baseScore * qualityBonus
-	fmt.Printf("FINAL SCORE: %.3f (quality=%.3f)\n", finalScore, qualityBonus)
-
-	// Clamp auf 0-1 Bereich
-	if finalScore > 1.0 {
-		finalScore = 1.0
-	} else if finalScore < 0.0 {
-		finalScore = 0.0
-	}
-
-	verdict, confidence := determineBalancedVerdict(finalScore, calibratedScores)
 
 	fmt.Printf("VERDICT: %s (%.1f%%)\n", verdict, finalScore*100)
 	fmt.Printf("==================\n\n")
@@ -181,32 +241,147 @@ func CalculateOverallVerdict(results *pipeline.PipelineResult) map[string]interf
 		"reasoning":        reasoning,
 		"scores":           scores,
 		"analysis_quality": calculateAnalysisQuality(len(results.Results), len(scores)),
-		"quality_factor":   analysisQuality,
+
+		// NEUE SEPARATE BEWERTUNGEN - NUR NOCH 2 KATEGORIEN
+		"separate_analysis": map[string]interface{}{
+			"computer_vision": map[string]interface{}{
+				"score":       computerVisionScore,
+				"percentage":  computerVisionScore * 100,
+				"methods":     computerVisionScores,
+				"verdict":     getCategoryVerdict(computerVisionScore),
+				"explanation": generateComputerVisionExplanation(computerVisionScores),
+			},
+			"ai_analysis": map[string]interface{}{
+				"score":       aiAnalysisScore,
+				"percentage":  aiAnalysisScore * 100,
+				"methods":     aiScores,
+				"verdict":     getCategoryVerdict(aiAnalysisScore),
+				"explanation": generateAIExplanation(aiScores),
+			},
+			"comparison": map[string]interface{}{
+				"cv_vs_ai_difference": calculateDifference(computerVisionScore, aiAnalysisScore),
+				"agreement_level":     calculateAgreementLevel(computerVisionScore, aiAnalysisScore),
+				"dominant_method":     getDominantMethodSimple(computerVisionScore, aiAnalysisScore),
+			},
+		},
 
 		"detailed_breakdown": map[string]interface{}{
-			"traditional_computer_vision": map[string]interface{}{
-				"average_score": traditionalAvg,
-				"verdict":       getCategoryVerdict(traditionalAvg),
-				"methods":       traditionalScores,
-				"explanation":   generateTraditionalExplanation(traditionalScores),
+			"weighted_scores": calculateWeightedBreakdown(scores, weights),
+			"method_groups": map[string]interface{}{
+				"computer_vision":  computerVisionScores, // Enthält jetzt auch Metadata
+				"ai_deep_learning": aiScores,
 			},
-			"ai_deep_learning": map[string]interface{}{
-				"average_score": aiAvg,
-				"verdict":       getCategoryVerdict(aiAvg),
-				"methods":       aiScores,
-				"explanation":   generateAIExplanation(aiScores),
-			},
-			"metadata_forensics": map[string]interface{}{
-				"average_score": metadataAvg,
-				"verdict":       getCategoryVerdict(metadataAvg),
-				"methods":       metadataScores,
-				"explanation":   generateMetadataExplanation(metadataScores),
-			},
-			"method_agreement": analyzeMethodAgreement(traditionalAvg, aiAvg, metadataAvg),
+			"strength_indicators": analyzeStrengthIndicators(scores),
+			"consistency_check":   checkConsistency(scores),
 		},
 	}
 }
 
+// Helper-Funktionen für separate Score-Berechnung
+func calculateComputerVisionScore(computerVisionScores map[string]float64) float64 {
+	if len(computerVisionScores) == 0 {
+		return -1
+	}
+
+	var sum float64
+	for _, score := range computerVisionScores {
+		sum += score
+	}
+	return sum / float64(len(computerVisionScores))
+}
+
+func calculateAIAnalysisScore(aiScores map[string]float64) float64 {
+	if len(aiScores) == 0 {
+		return -1
+	}
+
+	var sum float64
+	for _, score := range aiScores {
+		sum += score
+	}
+	return sum / float64(len(aiScores))
+}
+
+func getCategoryVerdict(score float64) string {
+	if score < 0 {
+		return "No Data"
+	} else if score >= 0.7 {
+		return "AI Generated"
+	} else if score >= 0.3 {
+		return "Uncertain"
+	} else {
+		return "Likely Human"
+	}
+}
+
+func calculateDifference(score1, score2 float64) float64 {
+	if score1 < 0 || score2 < 0 {
+		return -1
+	}
+	return math.Abs(score1 - score2)
+}
+
+func calculateAgreementLevel(cvScore, aiScore float64) string {
+	if cvScore < 0 || aiScore < 0 {
+		return "insufficient_data"
+	}
+
+	diff := math.Abs(cvScore - aiScore)
+	if diff <= 0.1 {
+		return "strong_agreement"
+	} else if diff <= 0.3 {
+		return "moderate_agreement"
+	} else if diff <= 0.5 {
+		return "weak_agreement"
+	} else {
+		return "strong_disagreement"
+	}
+}
+
+func getDominantMethodSimple(cvScore, aiScore float64) string {
+	if cvScore < 0 && aiScore < 0 {
+		return "no_data"
+	} else if cvScore < 0 {
+		return "ai_analysis"
+	} else if aiScore < 0 {
+		return "computer_vision"
+	} else if cvScore > aiScore {
+		return "computer_vision"
+	} else if aiScore > cvScore {
+		return "ai_analysis"
+	} else {
+		return "equal"
+	}
+}
+
+func generateComputerVisionExplanation(scores map[string]float64) string {
+	if len(scores) == 0 {
+		return "No computer vision or metadata analysis available"
+	}
+
+	var explanations []string
+	for method, score := range scores {
+		if score >= 0.7 {
+			if method == "metadata" || method == "c2pa" || method == "exif" {
+				explanations = append(explanations, fmt.Sprintf("%s found strong AI markers (%.1f%%)", method, score*100))
+			} else {
+				explanations = append(explanations, fmt.Sprintf("%s indicates strong AI artifacts (%.1f%%)", method, score*100))
+			}
+		} else if score >= 0.3 {
+			explanations = append(explanations, fmt.Sprintf("%s shows mixed signals (%.1f%%)", method, score*100))
+		} else {
+			if method == "metadata" || method == "c2pa" || method == "exif" {
+				explanations = append(explanations, fmt.Sprintf("%s found clean metadata (%.1f%%)", method, score*100))
+			} else {
+				explanations = append(explanations, fmt.Sprintf("%s suggests human origin (%.1f%%)", method, score*100))
+			}
+		}
+	}
+
+	return strings.Join(explanations, "; ")
+}
+
+// Bestehende Helper-Funktionen
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
@@ -216,98 +391,98 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func calculateCategoryAverage(scores map[string]float64) float64 {
-	if len(scores) == 0 {
-		return -1
+func calculateAnalysisQuality(totalMethods, successfulMethods int) float64 {
+	if totalMethods == 0 {
+		return 0.0
+	}
+	return float64(successfulMethods) / float64(totalMethods)
+}
+
+func calculateWeightedBreakdown(scores map[string]float64, weights map[string]float64) map[string]float64 {
+	breakdown := make(map[string]float64)
+	for name, score := range scores {
+		if weight, exists := weights[name]; exists {
+			breakdown[name] = score * weight
+		}
+	}
+	return breakdown
+}
+
+func analyzeStrengthIndicators(scores map[string]float64) []string {
+	indicators := []string{}
+
+	for name, score := range scores {
+		if score >= 0.9 {
+			indicators = append(indicators, fmt.Sprintf("Very strong: %s", name))
+		} else if score >= 0.7 {
+			indicators = append(indicators, fmt.Sprintf("Strong: %s", name))
+		}
 	}
 
+	return indicators
+}
+
+func checkConsistency(scores map[string]float64) map[string]interface{} {
+	if len(scores) < 2 {
+		return map[string]interface{}{
+			"level":      "insufficient_data",
+			"variance":   0.0,
+			"assessment": "Need more methods for consistency check",
+		}
+	}
+
+	// Berechne Varianz
 	var sum float64
 	for _, score := range scores {
 		sum += score
 	}
-	return sum / float64(len(scores))
-}
+	mean := sum / float64(len(scores))
 
-func createDefinitiveResponse(traditionalAvg, aiAvg, metadataAvg float64, scores map[string]float64, reasoning []string) map[string]interface{} {
-	traditionalScores := make(map[string]float64)
-	aiScores := make(map[string]float64)
-	metadataScores := make(map[string]float64)
+	var variance float64
+	for _, score := range scores {
+		diff := score - mean
+		variance += diff * diff
+	}
+	variance /= float64(len(scores))
 
-	// Re-kategorisiere für definitive Response
-	traditionalMethods := []string{"artifacts", "compression", "pixel-analysis", "color-balance", "lighting-analysis", "advanced-artifacts", "object-coherence"}
-	metadataMethods := []string{"metadata", "metadata-quick", "exif", "c2pa"}
-	aiMethods := []string{"ai-model"}
+	var level string
+	var assessment string
 
-	for name, score := range scores {
-		if contains(traditionalMethods, name) {
-			traditionalScores[name] = score
-		} else if contains(metadataMethods, name) {
-			metadataScores[name] = score
-		} else if contains(aiMethods, name) {
-			aiScores[name] = score
-		}
+	if variance <= 0.1 {
+		level = "high"
+		assessment = "Methods show strong agreement"
+	} else if variance <= 0.3 {
+		level = "moderate"
+		assessment = "Methods show reasonable consistency"
+	} else {
+		level = "low"
+		assessment = "Methods show significant disagreement"
 	}
 
 	return map[string]interface{}{
-		"verdict":          "AI Generated (Confirmed)",
-		"probability":      100.0,
-		"confidence":       0.99,
-		"summary":          "AI Generated (Confirmed) - 100.0% AI probability with 99% confidence",
-		"reasoning":        reasoning,
-		"scores":           scores,
-		"analysis_quality": calculateAnalysisQuality(len(scores), len(scores)),
-		"detailed_breakdown": map[string]interface{}{
-			"traditional_computer_vision": map[string]interface{}{
-				"average_score": traditionalAvg,
-				"verdict":       getCategoryVerdict(traditionalAvg),
-				"methods":       traditionalScores,
-				"explanation":   generateTraditionalExplanation(traditionalScores),
-			},
-			"ai_deep_learning": map[string]interface{}{
-				"average_score": aiAvg,
-				"verdict":       getCategoryVerdict(aiAvg),
-				"methods":       aiScores,
-				"explanation":   generateAIExplanation(aiScores),
-			},
-			"metadata_forensics": map[string]interface{}{
-				"average_score": metadataAvg,
-				"verdict":       getCategoryVerdict(metadataAvg),
-				"methods":       metadataScores,
-				"explanation":   generateMetadataExplanation(metadataScores),
-			},
-			"method_agreement": analyzeMethodAgreement(traditionalAvg, aiAvg, metadataAvg),
-		},
+		"level":      level,
+		"variance":   variance,
+		"mean":       mean,
+		"assessment": assessment,
 	}
 }
 
-func getCategoryVerdict(avgScore float64) string {
-	if avgScore < 0 {
-		return "No Data"
-	} else if avgScore >= 0.7 {
-		return "Strong AI Indicators"
-	} else if avgScore >= 0.5 {
-		return "Moderate AI Indicators"
-	} else if avgScore >= 0.3 {
-		return "Weak AI Indicators"
-	} else {
-		return "Authenticity Indicators"
-	}
-}
-
-func calculateAnalysisQuality(totalAnalyses, successfulAnalyses int) string {
-	if totalAnalyses == 0 {
-		return "no_data"
+func generateAIExplanation(scores map[string]float64) string {
+	if len(scores) == 0 {
+		return "No AI deep learning analysis available"
 	}
 
-	successRate := float64(successfulAnalyses) / float64(totalAnalyses)
-
-	if successRate >= 0.9 {
-		return "excellent"
-	} else if successRate >= 0.7 {
-		return "good"
-	} else if successRate >= 0.5 {
-		return "fair"
-	} else {
-		return "poor"
+	for _, score := range scores {
+		if score >= 0.9 {
+			return fmt.Sprintf("Neural network strongly predicts AI-generated (%.1f%% confidence). Very high certainty from deep learning model.", score*100)
+		} else if score >= 0.7 {
+			return fmt.Sprintf("Neural network indicates likely AI-generated (%.1f%% confidence). Strong AI detection signals.", score*100)
+		} else if score >= 0.3 {
+			return fmt.Sprintf("Neural network shows mixed results (%.1f%% confidence). Uncertain classification from AI model.", score*100)
+		} else {
+			return fmt.Sprintf("Neural network suggests human origin (%.1f%% authentic). Low AI detection confidence.", (1-score)*100)
+		}
 	}
+
+	return "AI deep learning analysis completed"
 }
