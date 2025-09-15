@@ -1,0 +1,31 @@
+Das Classify-Script im --live Modus ausführen, 
+damit die Models geladen bleiben und nicht für
+jedes analysierte Bild erst neu geladen werden müssen.
+
+python classify-v6.py --models Ordner/der/Models --live
+
+Anschließend kann ein Bild oder mehrere Bilder hintereinander jeweils
+von '' oder "" umgeben an das live Script übergeben werden.
+
+Output:
+
+INFO: Verarbeite 1 Bilder...
+INFO: USED_THRESHOLD: per-model
+img: 0WMJAD609DMDXVJ2YZGGSD70Z0.jpeg pred: FAKE prob: 0.627 conf: 0.255
+
+Output bei mehreren Bildern (jeweils einzeln mit '' oder "" angegeben):
+
+INFO: Verarbeite 2 Bilder...
+INFO: USED_THRESHOLD: per-model
+img: 0WMJAD609DMDXVJ2YZGGSD70Z0.jpeg pred: FAKE prob: 0.627 conf: 0.255
+img: 00002-20250827032318-2949596666.jpeg pred: FAKE prob: 1.000 conf: 1.000
+
+Output bei einem Ordner:
+
+INFO: Verarbeite 3 Bilder...
+INFO: USED_THRESHOLD: per-model
+img: 0004-R.jpeg pred: REAL prob: 0.000 conf: 1.000
+img: 1iea6665qklf1.jpeg pred: REAL prob: 0.000 conf: 1.000
+img: 3ugpro0tpsdf1.jpeg pred: REAL prob: 0.000 conf: 1.000
+
+SUMMARY: 3 REAL, 0 FAKE
