@@ -168,6 +168,10 @@ func CalculateOverallVerdict(results *pipeline.PipelineResult) map[string]interf
 				continue
 			}
 
+			if name == "ai-model" {
+				continue // Skip AI-Model für finalScore
+			}
+
 			adaptiveWeight := weight
 			if score >= 0.8 {
 				adaptiveWeight *= 1.2
