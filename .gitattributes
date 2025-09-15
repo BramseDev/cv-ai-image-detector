@@ -1,2 +1,1 @@
-*.pt filter=lfs diff=lfs merge=lfs -text
-ai-analyse/*.pt filter=lfs diff=lfs merge=lfs -text
+ai-analyse/checkpoint.pt filter=lfs diff=lfs merge=lfs -text
