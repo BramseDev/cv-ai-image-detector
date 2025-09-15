@@ -10,16 +10,16 @@ func determineBalancedVerdict(score float64, scores map[string]float64) (string,
 		thresholdAdjustment = 0.05
 	}
 
-	if score >= (0.70 + thresholdAdjustment) {
+	if score >= (0.75 + thresholdAdjustment) {
 		confidence := math.Min(0.95, baseConfidence+0.15)
 		return "AI Generated", confidence
-	} else if score >= (0.50 + thresholdAdjustment) {
+	} else if score >= (0.60 + thresholdAdjustment) {
 		confidence := math.Min(0.85, baseConfidence+0.10)
 		return "Likely AI Generated", confidence
-	} else if score >= (0.30 + thresholdAdjustment) {
+	} else if score >= (0.55 + thresholdAdjustment) { // Geändert von 0.40 auf 0.55
 		confidence := math.Min(0.75, baseConfidence)
 		return "Uncertain", confidence
-	} else if score >= (0.15 + thresholdAdjustment) {
+	} else if score >= (0.25 + thresholdAdjustment) {
 		confidence := math.Min(0.85, baseConfidence+0.10)
 		return "Likely Human", confidence
 	} else {
