@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN npm run drizzle-kit generate --config=drizzle.config.ts || (echo 'No schema?'; mkdir -p drizzle)
 RUN npm run build
 
 FROM node:20
