@@ -1,13 +1,19 @@
-FROM node:20
-
+FROM node:20 AS build
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
-
 COPY . .
-
 RUN npm run build
 
+FROM node:20
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/build ./build
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=build /app/src ./src
+
 EXPOSE 3000
-CMD ["node", "build"]
+CMD bash -lc "drizzle-kit migrate --config=drizzle.config.ts && node build"
