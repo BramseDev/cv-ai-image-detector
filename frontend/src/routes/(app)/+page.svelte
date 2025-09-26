@@ -218,82 +218,6 @@
                     {/if}
                 </section>
 
-                <!-- Computer Vision Analysis Results -->
-                <div class="bg-blue-50 rounded-xl p-6 max-w-xl mx-auto my-4">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-3">
-                        🔍 Computer Vision Analysis
-                    </h3>
-                    <div class="text-left mb-4">
-                        {#if resultScore !== null}
-                            <span
-                                class="inline-block bg-blue-600 text-white text-sm px-3 py-1 rounded-full mr-2"
-                            >
-                                Score: {resultScore.toFixed(2)}%
-                            </span>
-                        {/if}
-                        {#if resultConfidence !== null}
-                            <span
-                                class="inline-block bg-blue-500 text-white text-sm px-3 py-1 rounded-full"
-                            >
-                                Confidence: {resultConfidence.toFixed(2)}%
-                            </span>
-                        {/if}
-                    </div>
-
-                    {#if resultReasoning && resultReasoning.length > 0}
-                        <div class="mt-4">
-                            <h4 class="text-lg font-medium text-blue-700 mb-1">
-                                Reasoning
-                            </h4>
-                            <ul
-                                class="list-disc list-inside text-gray-700 ml-4"
-                            >
-                                {#each resultReasoning as reason}
-                                    <li>{reason}</li>
-                                {/each}
-                            </ul>
-                        </div>
-                    {/if}
-                </div>
-
-                <!-- AI Model Analysis Results -->
-                {#if aiModelScore !== null}
-                    <div
-                        class="bg-purple-50 rounded-xl p-6 max-w-xl mx-auto my-4"
-                    >
-                        <h3 class="text-xl font-semibold text-purple-700 mb-3">
-                            🤖 AI Neural Network Analysis
-                        </h3>
-                        <div class="text-left mb-4">
-                            <span
-                                class="inline-block bg-purple-600 text-white text-sm px-3 py-1 rounded-full mr-2"
-                            >
-                                AI Probability: {aiModelScore.toFixed(2)}%
-                            </span>
-                            {#if aiModelConfidence !== null}
-                                <span
-                                    class="inline-block bg-purple-500 text-white text-sm px-3 py-1 rounded-full"
-                                >
-                                    Confidence: {aiModelConfidence.toFixed(2)}%
-                                </span>
-                            {/if}
-                        </div>
-
-                        {#if aiModelExplanation}
-                            <div class="mt-4">
-                                <h4
-                                    class="text-lg font-medium text-purple-700 mb-1"
-                                >
-                                    Analysis
-                                </h4>
-                                <p class="text-gray-700 ml-4">
-                                    {aiModelExplanation}
-                                </p>
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
-
                 <!-- Collapsable details -->
                 <div
                     class="collapse collapse-arrow border border-base-300 bg-base-100 mt-8"
@@ -304,6 +228,12 @@
                     </div>
                     <div class="collapse-content text-black">
                         <div class="text-xl font-medium text-primary mb-2">
+                            <p class="text-base text-gray-600 mb-4">
+                                Our computer vision algorithms analyze pixel
+                                patterns, lighting consistency, color balance,
+                                and compression artifacts to detect AI-generated
+                                content.
+                            </p>
                             <p>Analysis Scores:</p>
                             {#if resultDetailedScores && Object.keys(resultDetailedScores).length > 0}
                                 <ul
