@@ -43,6 +43,11 @@
 
     let resultArtifactSummary: Record<string, boolean> | null = $state(null);
 
+    // AI Model specific results
+    let aiModelScore: number | null = $state(null);
+    let aiModelExplanation: string | null = $state(null);
+    let aiModelConfidence: number | null = $state(null);
+
     let loading: boolean = $state(false);
 
     function handleFileSelected(event) {
@@ -76,44 +81,34 @@
                 return;
             }
 
-            // Handle the processed response structure that comes to frontend
-            // Check if we have ai-model data in detailed_scores
-            const aiModelScore = result.detailed_scores?.["ai-model"];
+            // Handle both computer vision and AI model results
+            // First, set the computer vision results (original format)
+            resultScore = result.score ?? 0;
+            resultSummary = result.summary;
+            resultConfidence = result.confidence ?? 0;
+            resultVerdict = result.verdict;
+            resultReasoning = result.reasoning;
+            resultLighting = result.lighting_analysis;
+            resultObject = result.object_analysis;
+            resultColor = result.color_balance;
+            resultArtifactSummary = result.artifact_summary;
+            resultDetailedScores = result.detailed_scores;
 
-            if (aiModelScore !== undefined) {
+            // Then, handle AI model results separately
+            const aiModelScoreValue = result.detailed_scores?.["ai-model"];
+            if (aiModelScoreValue !== undefined) {
                 // AI model score: 0 = Human, 1 = AI
                 // Convert to percentage for display (0 = 0% AI, 1 = 100% AI)
-                resultScore = aiModelScore * 100;
-                resultSummary = "Neural network analysis completed";
-                resultConfidence = 100; // High confidence since ai-model provides binary results
-
-                // Try to get the original explanation from the raw response
-                const aiModelExplanation = result["ai-model"]?.explanation ||
-                                         `Neural network analysis: ${(aiModelScore * 100).toFixed(1)}% AI probability`;
-
-
-                resultReasoning = [aiModelExplanation];
-
-
-                // Set detailed scores from ai-model only
-                resultDetailedScores = {
-                    "ai-model": aiModelScore
-                };
+                aiModelScore = aiModelScoreValue * 100;
+                aiModelConfidence = 100; // High confidence since ai-model provides binary results
+                aiModelExplanation =
+                    result["ai-model"]?.explanation ||
+                    `Neural network analysis: ${(aiModelScoreValue * 100).toFixed(1)}% AI probability`;
             } else {
-                // Fallback if ai-model section is not found
-                resultScore = 0;
-                resultSummary = "AI model analysis not available";
-                resultConfidence = 0;
-                resultVerdict = "Unknown";
-                resultReasoning = ["AI model analysis not available"];
-                resultDetailedScores = {};
+                aiModelScore = null;
+                aiModelConfidence = null;
+                aiModelExplanation = null;
             }
-
-            // Set all other analysis results to null since we only want ai-model
-            resultLighting = null;
-            resultObject = null;
-            resultColor = null;
-            resultArtifactSummary = null;
 
             loading = false;
 
@@ -168,7 +163,7 @@
         <div class="mt-8 w-full max-w-3xl mx-auto">
             <button
                 onclick={() => {
-                    window.location.href = '/';
+                    window.location.href = "/";
                     setTimeout(() => window.location.reload(), 100);
                 }}
                 class="btn btn-neutral btn-soft font-light btn-lg mr-4"
@@ -223,19 +218,22 @@
                     {/if}
                 </section>
 
-                <!-- Basic info section -->
-                <div class="bg-gray-50 rounded-xl p-6 max-w-xl mx-auto my-8">
+                <!-- Computer Vision Analysis Results -->
+                <div class="bg-blue-50 rounded-xl p-6 max-w-xl mx-auto my-4">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-3">
+                        🔍 Computer Vision Analysis
+                    </h3>
                     <div class="text-left mb-4">
-                        {#if resultScore}
+                        {#if resultScore !== null}
                             <span
-                                class="inline-block bg-primary text-white text-sm px-3 py-1 rounded-full mr-2"
+                                class="inline-block bg-blue-600 text-white text-sm px-3 py-1 rounded-full mr-2"
                             >
                                 Score: {resultScore.toFixed(2)}%
                             </span>
                         {/if}
-                        {#if resultConfidence}
+                        {#if resultConfidence !== null}
                             <span
-                                class="inline-block bg-secondary text-white text-sm px-3 py-1 rounded-full"
+                                class="inline-block bg-blue-500 text-white text-sm px-3 py-1 rounded-full"
                             >
                                 Confidence: {resultConfidence.toFixed(2)}%
                             </span>
@@ -244,9 +242,9 @@
 
                     {#if resultReasoning && resultReasoning.length > 0}
                         <div class="mt-4">
-                            <h3 class="text-xl font-semibold text-primary mb-1">
+                            <h4 class="text-lg font-medium text-blue-700 mb-1">
                                 Reasoning
-                            </h3>
+                            </h4>
                             <ul
                                 class="list-disc list-inside text-gray-700 ml-4"
                             >
@@ -257,6 +255,44 @@
                         </div>
                     {/if}
                 </div>
+
+                <!-- AI Model Analysis Results -->
+                {#if aiModelScore !== null}
+                    <div
+                        class="bg-purple-50 rounded-xl p-6 max-w-xl mx-auto my-4"
+                    >
+                        <h3 class="text-xl font-semibold text-purple-700 mb-3">
+                            🤖 AI Neural Network Analysis
+                        </h3>
+                        <div class="text-left mb-4">
+                            <span
+                                class="inline-block bg-purple-600 text-white text-sm px-3 py-1 rounded-full mr-2"
+                            >
+                                AI Probability: {aiModelScore.toFixed(2)}%
+                            </span>
+                            {#if aiModelConfidence !== null}
+                                <span
+                                    class="inline-block bg-purple-500 text-white text-sm px-3 py-1 rounded-full"
+                                >
+                                    Confidence: {aiModelConfidence.toFixed(2)}%
+                                </span>
+                            {/if}
+                        </div>
+
+                        {#if aiModelExplanation}
+                            <div class="mt-4">
+                                <h4
+                                    class="text-lg font-medium text-purple-700 mb-1"
+                                >
+                                    Analysis
+                                </h4>
+                                <p class="text-gray-700 ml-4">
+                                    {aiModelExplanation}
+                                </p>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
 
                 <!-- Collapsable details -->
                 <div
@@ -414,8 +450,6 @@
             />
         </div>
     {/if}
-
-
 
     <div class="flex justify-center items-center w-full" id="how-it-works">
         <HowItWorksSection />
