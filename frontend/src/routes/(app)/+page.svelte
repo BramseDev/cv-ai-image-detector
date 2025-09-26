@@ -8,11 +8,7 @@
 
     let selectedFile: File | null = $state(null);
     let imageUrl: string | null = $state(null);
-    let resultScore: number | null = $state(null);
-    let resultSummary: string | null = $state(null);
-    let resultConfidence: number | null = $state(null);
     let resultVerdict: string | null = $state(null);
-    let resultReasoning: string[] | null = $state(null);
     let resultDetailedScores: Record<string, number> | null = $state(null);
     let resultLighting: {
         ai_lighting_score: number;
@@ -83,11 +79,8 @@
 
             // Handle both computer vision and AI model results
             // First, set the computer vision results (original format)
-            resultScore = result.score ?? 0;
-            resultSummary = result.summary;
-            resultConfidence = result.confidence ?? 0;
+
             resultVerdict = result.verdict;
-            resultReasoning = result.reasoning;
             resultLighting = result.lighting_analysis;
             resultObject = result.object_analysis;
             resultColor = result.color_balance;
@@ -115,10 +108,13 @@
             // Then send it to your save endpoint
             const saveForm = new FormData();
             saveForm.append("image", selectedFile);
-            saveForm.append("result_score", resultScore!.toFixed(2).toString());
+            saveForm.append(
+                "result_score",
+                aiModelScore!.toFixed(2).toString(),
+            );
             saveForm.append(
                 "result_confidence",
-                resultConfidence!.toFixed(2).toString(),
+                aiModelConfidence!.toFixed(2).toString(),
             );
 
             await fetch("/?/saveImage", {
@@ -199,21 +195,21 @@
                 <section class="text-center my-12">
                     <h2
                         class="text-5xl font-extrabold mb-4"
-                        style="color: {resultScore
-                            ? `hsl(${120 - (resultScore / 100) * 120}, 70%, 45%)`
+                        style="color: {aiModelScore
+                            ? `hsl(${120 - (aiModelScore / 100) * 120}, 70%, 45%)`
                             : 'inherit'}"
                     >
                         {resultVerdict}
                     </h2>
-                    {#if resultScore}
+                    {#if aiModelScore}
                         <p class="text-2xl text-gray-800">
-                            {resultScore.toFixed(2)}% chance of being
+                            {aiModelScore.toFixed(2)}% chance of being
                             AI-generated
                         </p>
                     {/if}
-                    {#if resultConfidence}
+                    {#if aiModelConfidence}
                         <p class="text-lg text-gray-500 mt-1">
-                            Confidence level: {resultConfidence.toFixed(2)}%
+                            Confidence level: {aiModelConfidence.toFixed(2)}%
                         </p>
                     {/if}
                 </section>
@@ -229,10 +225,15 @@
                     <div class="collapse-content text-black">
                         <div class="text-xl font-medium text-primary mb-2">
                             <p class="text-base text-gray-600 mb-4">
-                                Our computer vision algorithms analyze pixel
-                                patterns, lighting consistency, color balance,
-                                and compression artifacts to detect AI-generated
-                                content.
+                                Traditional vision techniques look for
+                                surface-level artifacts: patterns in pixels,
+                                color, or compression. But these signals are
+                                quickly outdated as generative models advance.
+                                Our trained AI system learns from millions of
+                                examples, giving it the ability to spot subtle
+                                synthetic fingerprints that older approaches
+                                miss. You can view the traditional approach
+                                below.
                             </p>
                             <p>Analysis Scores:</p>
                             {#if resultDetailedScores && Object.keys(resultDetailedScores).length > 0}
