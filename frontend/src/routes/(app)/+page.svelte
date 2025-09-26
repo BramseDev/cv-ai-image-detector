@@ -199,7 +199,7 @@
                             ? `hsl(${120 - (aiModelScore / 100) * 120}, 70%, 45%)`
                             : 'inherit'}"
                     >
-                        {resultVerdict}
+                        {aiModelExplanation}
                     </h2>
                     {#if aiModelScore}
                         <p class="text-2xl text-gray-800">
