@@ -29,39 +29,31 @@ The system utilizes a modular pipeline architecture consisting of the following 
 - **Web Dashboard**: Offers a real-time monitoring interface for system status and results visualization.
 - **Docker Deployment**: All components are containerized for easy and reproducible deployment.
 
-
 ## Quick Start
+
+### Direct access to inference python script
+
+`./ai-analyse/new_analysis/classify-v6.py --models ensemble1 --live`
+
+Just start, and either drag and drop an image into shell, or pass an image path with surrounding `''`.
+
+## Deployment
 
 ### Prerequisites
 
 - Docker & Docker Compose
-- Make (optional, for convenience commands)
-
-### One-Command Deployment
-
-```bash
-make deploy
-```
-
-This will:
-1. Build the Docker image
-2. Start all services
-3. Run health checks
-4. Display access URLs
-
-### Manual Deployment
 
 ```bash
 # Build the image
-docker-compose build --no-cache
-# oder direkt
-docker-compose up
+docker compose build --no-cache
+# or directly
+docker compose up
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # Check status
-docker-compose ps
+docker ps
 
 # for the frontend
 cd frontend
@@ -86,41 +78,6 @@ After deployment, access these URLs:
 
 ```bash
 curl -X POST -F "image=@your-image.jpg" http://localhost:8080/upload
-```
-
-### Example Response
-
-```json
-{
-  "verdict": "Likely AI Generated",
-  "probability": 75.3,
-  "confidence": 0.87,
-  "analysis_summary": {
-    "traditional_computer_vision": {
-      "verdict": "Strong AI Indicators",
-      "explanation": "Computer Vision detected AI patterns in: Visual Artifacts, Mathematical Patterns"
-    },
-    "metadata_forensics": {
-      "verdict": "Authenticity Indicators", 
-      "explanation": "Rich EXIF data suggests camera origin"
-    },
-    "ai_deep_learning": {
-      "verdict": "Strong AI Indicators",
-      "explanation": "AI model detects 89% probability of synthetic generation"
-    }
-  },
-  "detailed_analysis": {
-    "artifacts": {
-      "ai_probability_score": 0.82,
-      "positive_indicators": 7,
-      "total_indicators": 10
-    },
-    "lighting-analysis": {
-      "ai_lighting_score": 0.71,
-      "anomalies": ["Inconsistent shadow directions"]
-    }
-  }
-}
 ```
 
 ## Analysis Components
@@ -165,7 +122,7 @@ analyze_compression.py
 
 ### AI Deep Learning
 - **Neural Network**: 
-modeltest.py
+Ensemble of 5 separate models
  - Trained detection model
 
 - **Pattern Recognition**: Synthetic noise and generation artifacts
@@ -201,27 +158,6 @@ make logs
 docker-compose logs -f
 ```
 
-## Configuration
-
-### Environment Variables
-
-Create `.env` file:
-
-```env
-# Analysis Configuration
-EARLY_EXIT_ENABLED=true
-CACHE_TTL=30m
-MAX_FILE_SIZE=50MB
-
-# Performance Tuning
-ANALYSIS_TIMEOUT=120s
-PIPELINE_WORKERS=4
-
-# Monitoring
-METRICS_ENABLED=true
-LOG_LEVEL=info
-```
-
 ## Development Setup
 
 ### Local Development
@@ -236,22 +172,8 @@ cd pythonScripts && pip install -r requirements.txt
 # Build Go modules
 go mod tidy
 
-# Run tests
-make test
-```
-
-### File Structure
-
-```
-├── cmd/server/           # Main application entry
-├── internal/handlers/    # HTTP request handlers
-├── pkg/analyzer/         # Analysis pipeline components
-├── pythonScripts/        # Computer vision algorithms
-├── dashboard/           # Web monitoring interface
-├── ai-analyse/          # Deep learning models
-├── cache/              # Caching implementation
-├── monitoring/         # Metrics collection
-└── docker-compose.yml  # Container orchestration
+# Run the server
+go run cmd/server/main.go
 ```
 
 ## Performance Optimization
@@ -269,7 +191,7 @@ pipelines.go:
 ### Analysis Pipeline
 
 1. **Core Analysis** (10-20 seconds): Computer vision algorithms  
-2. **Deep Analysis** (20-30 seconds): AI model inference
+2. **Deep Analysis** (~200 milliseconds): AI model inference
 
 
 ## Troubleshooting
@@ -284,8 +206,8 @@ docker-compose ps
 # View detailed logs
 docker-compose logs image-analyzer
 
-# Restart services
-make restart
+# Clean up Docker resources (dangerous)
+docker system prune -a --volumes -f
 
 # when nothing helps
 source venv/bin/activate
@@ -323,37 +245,6 @@ curl http://localhost:8080/health
 curl -X POST -F "file=@test-image.jpg" http://localhost:8080/upload
 ```
 
-## Advanced Features
-
-### Custom Analysis Scripts
-
-Add new detection algorithms in 
-
-pythonScripts:
-
-```python
-def analyze_custom_feature(image_path):
-    """Custom analysis implementation"""
-    # Your detection logic here
-    return {
-        "custom_score": 0.75,
-        "indicators": ["pattern1", "pattern2"]
-    }
-```
-
-Register in 
-
-pipelines.go:
-
-```go
-{
-    Name:         "custom-analysis",
-    Priority:     3,
-    Timeout:      15 * time.Second,
-    Analyzer:     pythonrunner.RunCustomAnalysis,
-}
-```
-
 ### Metrics Integration
 
 Export metrics to external systems:
@@ -366,35 +257,9 @@ curl http://localhost:8080/metrics
 curl http://localhost:8080/metrics | jq '.business.ai_detection_rate'
 ```
 
-## Production Deployment
-
-### Security Considerations
-
-- Configure file upload limits
-- Implement rate limiting
-- Use HTTPS in production
-- Secure temporary file handling
-
-### Scaling
-
-- Use container orchestration (Kubernetes)
-- Implement horizontal scaling for analysis workers
-- Configure load balancing for API endpoints
-- Monitor resource usage and auto-scaling triggers
-
-### Backup Strategy
-
-```bash
-# Export analysis history
-curl http://localhost:8080/dashboard/metrics > metrics-backup.json
-
-# Backup configuration
-docker-compose config > docker-config-backup.yml
-```
-
 ## License
 
-This project is licensed under the MIT License. See LICENSE file for details.
+This project is licensed under the PolyForm-Noncommercial License. See LICENSE file for details.
 
 ## Contributing
 
@@ -412,16 +277,5 @@ This project is licensed under the MIT License. See LICENSE file for details.
 - **Logs**: Access via `make logs` or Docker commands
 
 ---
-
-## Scoring Interpretation
-
-| Score Range | Interpretation           | Description                                                                              |
-|-------------|--------------------------|------------------------------------------------------------------------------------------|
-| 0 - 19      | Very Likely Authentic    | Strong indicators of genuine photography. Natural compression, EXIF data present. Realistic lighting and color distribution. |
-| 20 - 54     | Likely Authentic         | Mostly authentic features. Minor anomalies within normal range. Probably a real photo.    |
-| 55 - 59     | Possibly AI Generated    | Mixed signals detected. Some suspicious characteristics present. Further analysis recommended. |
-| 60 - 79     | Likely AI Generated      | Multiple AI indicators found. Unnatural artifacts or patterns. High probability of AI generation. |
-| 80 - 100    | Very Likely AI Generated | Strong AI signals in multiple areas. Characteristic AI artifacts. Very high confidence in AI detection. |
-
 
 **Built with**: Go, Python, Rust, Docker, OpenCV, scikit-image, C2PA
