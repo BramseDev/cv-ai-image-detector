@@ -65,6 +65,7 @@ docker-compose ps
 
 # for the frontend
 cd frontend
+echo -e "POSTGRES_PASSWORD=secure_password_123\nDATABASE_URL=postgresql://root:secure_password_123@localhost:5434/local\nVITE_API_BASE_URL=http://localhost:8080/nBODY_SIZE_LIMIT=25M/nORIGIN=http://localhost:3000" > .env
 npm install
 npm run dev
 ```
