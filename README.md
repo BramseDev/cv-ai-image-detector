@@ -52,18 +52,18 @@ This will:
 ### Manual Deployment
 
 ```bash
-Build the image
+# Build the image
 docker-compose build --no-cache
-oder direkt
+# oder direkt
 docker-compose up
 
-Start services
+# Start services
 docker-compose up -d
 
-Check status
+# Check status
 docker-compose ps
 
-for the frontend
+# for the frontend
 cd frontend
 npm install
 npm run dev
