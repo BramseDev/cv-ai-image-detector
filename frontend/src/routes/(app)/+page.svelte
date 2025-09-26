@@ -76,16 +76,44 @@
                 return;
             }
 
-            resultScore = result.score ?? 0;
-            resultSummary = result.summary;
-            resultConfidence = result.confidence ?? 0;
-            resultVerdict = result.verdict;
-            resultReasoning = result.reasoning;
-            resultLighting = result.lighting_analysis;
-            resultObject = result.object_analysis;
-            resultColor = result.color_balance;
-            resultArtifactSummary = result.artifact_summary;
-            resultDetailedScores = result.detailed_scores;
+            // Handle the processed response structure that comes to frontend
+            // Check if we have ai-model data in detailed_scores
+            const aiModelScore = result.detailed_scores?.["ai-model"];
+
+            if (aiModelScore !== undefined) {
+                // AI model score: 0 = Human, 1 = AI
+                // Convert to percentage for display (0 = 0% AI, 1 = 100% AI)
+                resultScore = aiModelScore * 100;
+                resultSummary = "Neural network analysis completed";
+                resultConfidence = 100; // High confidence since ai-model provides binary results
+
+                // Try to get the original explanation from the raw response
+                const aiModelExplanation = result["ai-model"]?.explanation ||
+                                         `Neural network analysis: ${(aiModelScore * 100).toFixed(1)}% AI probability`;
+
+
+                resultReasoning = [aiModelExplanation];
+
+
+                // Set detailed scores from ai-model only
+                resultDetailedScores = {
+                    "ai-model": aiModelScore
+                };
+            } else {
+                // Fallback if ai-model section is not found
+                resultScore = 0;
+                resultSummary = "AI model analysis not available";
+                resultConfidence = 0;
+                resultVerdict = "Unknown";
+                resultReasoning = ["AI model analysis not available"];
+                resultDetailedScores = {};
+            }
+
+            // Set all other analysis results to null since we only want ai-model
+            resultLighting = null;
+            resultObject = null;
+            resultColor = null;
+            resultArtifactSummary = null;
 
             loading = false;
 
@@ -139,7 +167,10 @@
     {#if imageUrl}
         <div class="mt-8 w-full max-w-3xl mx-auto">
             <button
-                onclick={() => (imageUrl = null)}
+                onclick={() => {
+                    window.location.href = '/';
+                    setTimeout(() => window.location.reload(), 100);
+                }}
                 class="btn btn-neutral btn-soft font-light btn-lg mr-4"
             >
                 <svg
@@ -383,6 +414,8 @@
             />
         </div>
     {/if}
+
+
 
     <div class="flex justify-center items-center w-full" id="how-it-works">
         <HowItWorksSection />
