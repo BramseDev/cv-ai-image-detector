@@ -1,7 +1,91 @@
 # Git files
-.git
+.git/
 .gitignore
-.github
+.github/
+
+# Large directories that shouldn't be in build context
+uploads/
+logs/
+tmp/
+venv/
+env/
+.venv/
+pythonScripts/venv/
+node_modules/
+frontend/
+.next/
+dist/
+build/
+
+# Test data and large files
+testPics/
+test_images/
+testdata/
+test-data/
+dataset/
+data/
+models/
+*.model
+*.pth
+*.pt
+*.onnx
+
+# Development files
+*.log
+*.tmp
+*.temp
+test-*
+test_results.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+main
+*.exe
+target/
+runmany-eval/target/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Rust build artifacts
+pkg/analyzer/c2pa-rust/target/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.rar
+*.7z
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
 # Documentation
 README.md
@@ -9,72 +93,29 @@ README.md
 docs/
 
 # Environment files
-.env
-.env.local
-.env.*.local
+.env*
 
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
+# Makefiles and scripts (not needed in container)
+Makefile*
+scripts/start.sh
+
+# Docker files (not needed in build)
+docker-compose*.yml
+
+# Backup files
+*.backup
+*.bak
 *~
 
-# OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Cargo.lock files (large)
+Cargo.lock
 
-# Build artifacts
-main
-*.exe
-*.dll
-*.so
-*.dylib
+# Temporary pip install files
+=0.9.0
+=1.0.0
+=1.3.0
 
-# Test files
-test-*
-*_test.go
-testdata/
-
-# Temporary files
-*.tmp
-*.temp
-*.log
-logs/*
-
-# Upload directories (will be mounted)
-uploads/*
-tmp/*
-
-# Development files
-docker-compose.override.yml
-Dockerfile.dev
-
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Node modules (if any)
-node_modules/
-
-# Coverage files
-*.cover
-.coverage
-.pytest_cache/
-
-# Virtual environments
-venv/
-ENV/
+# Node modules anywhere
+**/node_modules/
+**/venv/
+**/target/

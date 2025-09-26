@@ -1,54 +1,55 @@
+# Stage 1: Go Builder
 FROM golang:1.22-alpine AS go-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY cmd/ ./cmd/
+COPY pkg/ ./pkg/
+COPY internal/ ./internal/
+COPY dashboard/ ./dashboard/
+COPY logging/ ./logging/
+COPY cache/ ./cache/
+COPY monitoring/ ./monitoring/
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server/main.go
 
-FROM python:3.11-slim
+# Stage 2: Rust Builder (Updated to latest version with build tools)
+FROM rust:1.82-slim AS rust-builder
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev \
-    libgomp1 libgtk-3-0 libjpeg-dev libpng-dev git curl \
-    build-essential g++ gcc python3-dev exiftool \
-    || apt-get install -y \
-    libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
-    libgomp1 libgtk-3-0 libjpeg-dev libpng-dev git curl \
-    build-essential g++ gcc python3-dev exiftool \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    perl \
+    make \
+    gcc \
+    g++ \
+    libc6-dev \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY pkg/analyzer/c2pa-rust/ ./
+RUN cargo build --release && strip target/release/c2pa-rust
 
-# Install Rust for c2pa binary compilation
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+# Stage 3: Final image
+FROM python:3.11-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl git exiftool build-essential python3-dev libgl1 libglib2.0-0 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 WORKDIR /app
 
-# Install Python dependencies für beide Module
+# Copy requirements first for better caching
 COPY pythonScripts/requirements.txt ./pythonScripts/
 COPY ai-analyse/requirements.txt ./ai-analyse/
-RUN pip install --no-cache-dir -r pythonScripts/requirements.txt \
-    && pip install --no-cache-dir -r ai-analyse/requirements.txt \
-    && pip cache purge
+RUN pip install --no-cache-dir -r pythonScripts/requirements.txt && \
+    pip install --no-cache-dir -r ai-analyse/requirements.txt && \
+    pip cache purge
 
+# Copy application files
 COPY pythonScripts/ ./pythonScripts/
 COPY ai-analyse/ ./ai-analyse/
-COPY pkg/ ./pkg/
 COPY dashboard/ ./dashboard/
 COPY --from=go-builder /app/main .
+COPY --from=rust-builder /app/target/release/c2pa-rust ./pkg/analyzer/c2pa-rust/target/release/
 
-# Build c2pa-rust binary
-RUN cd pkg/analyzer/c2pa-rust && cargo build --release
-
-RUN mkdir -p /app/uploads /app/logs /app/tmp \
-    && chmod +x ./main \
-    && chmod -R 755 ./pythonScripts/
-
-ENV GIN_MODE=release
-ENV PYTHON_PATH=/usr/local/bin/python3
-ENV SCRIPTS_PATH=/app/pythonScripts
+RUN chmod +x ./main && mkdir -p uploads logs tmp
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
 CMD ["./main"]
