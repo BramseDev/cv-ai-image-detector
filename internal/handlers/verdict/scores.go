@@ -1,6 +1,8 @@
 package verdict
 
 import (
+	"log"
+
 	"github.com/BramseDev/imageAnalyzer/internal/handlers/utils"
 )
 
@@ -27,10 +29,31 @@ func calculateMetadataScore(data map[string]interface{}) float64 {
 }
 
 func calculateAIModelScore(data map[string]interface{}) float64 {
+	// Unterstütze das neue classify-v6 Format
 	if probability, exists := utils.GetFloatValue(data, "probability"); exists {
+		log.Printf("DEBUG: AI Model Score from probability: %f", probability)
 		return probability
 	}
-	return 0.5
+
+	// Legacy Format Support
+	if aiAnalysis, exists := data["ai_model_analysis"]; exists {
+		if analysis, ok := aiAnalysis.(map[string]interface{}); ok {
+			if isAI, exists := analysis["is_ai_generated"]; exists {
+				if isAIBool, ok := isAI.(bool); ok {
+					if authScore, exists := utils.GetFloatValue(analysis, "authenticity_score"); exists {
+						if isAIBool {
+							return 1.0 - authScore
+						} else {
+							return authScore
+						}
+					}
+				}
+			}
+		}
+	}
+
+	log.Printf("DEBUG: AI Model Score defaulting to 0.5")
+	return 0.5 // Default wenn nicht verfügbar
 }
 
 func calculatePixelScore(data map[string]interface{}) float64 {

@@ -6,7 +6,8 @@ This Bachelor project explores the integration of computer vision and artificial
 Our system processes images through advanced computer vision techniques to extract relevant features, then applies AI models to assess and assign weighted scores based on predefined detection criteria.
 
 ## Acknowledgments
-Special thanks to [@lawi2022](https://github.com/lawi2022) and [@derfisch98](https://github.com/derfisch98) for their significant contributions to the development of this AI detection system, along with all other contributors.
+
+This bachelor project was a collaborative effort. Special thanks to [@lawi2022](https://github.com/lawi2022), [@derfisch98](https://github.com/derfisch98), [@fabian-thies](https://github.com/fabian-thies), [@iakdis](https://github.com/iakdis), and [@RuneMolzen](https://github.com/RuneMolzen) for their significant joint contributions to the development of this AI detection system, along with all other team members and contributors.
 
 
 

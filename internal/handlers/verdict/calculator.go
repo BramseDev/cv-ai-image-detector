@@ -312,7 +312,7 @@ func getCategoryVerdict(score float64) string {
 	} else if score >= 0.7 {
 		return "AI Generated"
 	} else if score >= 0.3 {
-		return "Uncertain"
+		return "Likely Human"
 	} else {
 		return "Likely Human"
 	}
